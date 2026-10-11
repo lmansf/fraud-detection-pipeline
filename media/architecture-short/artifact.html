@@ -103,8 +103,9 @@
     <path id="i4" class="wire" d="M880,645 V725 H250 V820" stroke="#7A4A33"/>
     <path id="m1" class="wire" d="M305,875 H477" stroke="#4B5B80" marker-end="url(#arrow)"/>
     <path id="m2" class="wire" d="M595,875 H767" stroke="#4B5B80" marker-end="url(#arrow)"/>
-    <path id="g1" class="wire" d="M885,875 H960 V1025 H300 V1060" stroke="#6B5A2A"/>
-    <path id="g2" class="wire" d="M885,875 H960 V1060" stroke="#6B5A2A"/>
+    <path id="g1" class="wire" d="M885,875 H960 V1025 H225 V1060" stroke="#6B5A2A"/>
+    <path id="g2" class="wire" d="M885,875 H960 V1025 H540 V1060" stroke="#6B5A2A"/>
+    <path id="g3" class="wire" d="M885,875 H960 V1060" stroke="#6B5A2A"/>
     <path id="loop" class="wire" d="M80,1130 H45 V290 H540 V312" stroke="#F5B942" stroke-dasharray="0" marker-end="url(#arrowGold)"/>
   </g>
   <text id="loopLabel" x="64" y="280" font-size="19" font-weight="600" font-style="italic" fill="#F5B942">retrain &amp; deploy</text>
@@ -160,22 +161,30 @@
   <text id="sSilver" x="540" y="962" text-anchor="middle" font-size="20" fill="#94A3B8">clean &amp; joined</text>
   <text id="sGold" x="830" y="962" text-anchor="middle" font-size="20" fill="#94A3B8">ML features</text>
 
-  <!-- Row 4: models -->
+  <!-- Row 4: outputs -->
   <g id="k1">
-    <rect id="k1r" x="80" y="1060" width="440" height="140" rx="22" fill="#16203A" stroke="#F5B942" stroke-width="2"/>
-    <text x="110" y="1110" font-size="30" font-weight="800" fill="#F5B942">Model 1 · Real-time</text>
-    <text x="110" y="1146" font-size="21" fill="#CBD5E1">scores every purchase</text>
-    <text x="110" y="1176" font-size="21" fill="#94A3B8">decision in &lt; 100 ms</text>
+    <rect id="k1r" x="80" y="1060" width="290" height="140" rx="22" fill="#16203A" stroke="#F5B942" stroke-width="2"/>
+    <text x="104" y="1096" font-size="16" font-weight="800" letter-spacing="3" fill="#F5B942">MODEL 1</text>
+    <text x="104" y="1132" font-size="29" font-weight="800" fill="#F1F5F9">Real-time</text>
+    <text x="104" y="1162" font-size="19" fill="#CBD5E1">scores every purchase</text>
+    <text x="104" y="1188" font-size="19" fill="#94A3B8">decision in &lt; 100 ms</text>
   </g>
   <g id="k2">
-    <rect id="k2r" x="560" y="1060" width="440" height="140" rx="22" fill="#1B1836" stroke="#A78BFA" stroke-width="2"/>
-    <text x="590" y="1110" font-size="30" font-weight="800" fill="#A78BFA">Model 2 · Wider view</text>
-    <text x="590" y="1146" font-size="21" fill="#CBD5E1">finds fraud rings across</text>
-    <text x="590" y="1176" font-size="21" fill="#94A3B8">cards, devices &amp; accounts</text>
+    <rect id="k2r" x="395" y="1060" width="290" height="140" rx="22" fill="#1B1836" stroke="#A78BFA" stroke-width="2"/>
+    <text x="419" y="1096" font-size="16" font-weight="800" letter-spacing="3" fill="#A78BFA">MODEL 2</text>
+    <text x="419" y="1132" font-size="29" font-weight="800" fill="#F1F5F9">Safety net</text>
+    <text x="419" y="1162" font-size="19" fill="#CBD5E1">catches missed fraud</text>
+    <text x="419" y="1188" font-size="19" fill="#94A3B8">and alerts the team</text>
   </g>
-
+  <g id="k3">
+    <rect id="k3r" x="710" y="1060" width="290" height="140" rx="22" fill="#0F1F2C" stroke="#38BDF8" stroke-width="2"/>
+    <text x="734" y="1096" font-size="16" font-weight="800" letter-spacing="3" fill="#38BDF8">SELF-SERVICE BI</text>
+    <text x="734" y="1132" font-size="29" font-weight="800" fill="#F1F5F9">Dashboards</text>
+    <text x="734" y="1162" font-size="19" fill="#CBD5E1">answers on demand</text>
+    <text x="734" y="1188" font-size="19" fill="#94A3B8">built with Claude</text>
+  </g>
   <!-- Footer -->
-  <text id="footer" x="540" y="1272" text-anchor="middle" font-size="23" fill="#94A3B8" letter-spacing="0.5">Synthetic data  ·  Supabase  ·  Databricks  ·  2 ML models</text>
+  <text id="footer" x="540" y="1272" text-anchor="middle" font-size="23" fill="#94A3B8" letter-spacing="0.5">Synthetic data  ·  Supabase  ·  Databricks  ·  2 ML models  ·  BI</text>
 
   <!-- Particles are injected here, above everything else -->
   <g id="particles"></g>
@@ -207,8 +216,8 @@ const CAPTIONS = [
   { s: 5.5, e: 10.5, title: "Model 1 scores it in real time", sub: "Approve or decline before checkout finishes", step: 2 },
   { s: 10.5, e: 14.5, title: "Every event lands in Supabase", sub: "Purchases, decisions and responses as raw tables", step: 3 },
   { s: 14.5, e: 19, title: "Databricks refines the data", sub: "Bronze  →  Silver  →  Gold", step: 4 },
-  { s: 19, e: 23, title: "Two models learn from Gold", sub: "Retrained and redeployed to checkout", step: 5 },
-  { s: 23, e: DURATION + 1, title: "Fraud stopped in milliseconds", sub: "and the rings behind it, found in batch", step: 6 },
+  { s: 19, e: 23, title: "Gold powers every output", sub: "Two models plus self-service dashboards", step: 5 },
+  { s: 23, e: DURATION + 1, title: "Fraud stopped in milliseconds", sub: "with a batch safety net for anything missed", step: 6 },
 ];
 
 // ---------- particle schedule ----------
@@ -225,11 +234,11 @@ for (const w of [15.8, 17.3]) {
   add("m1", w + 1.0, 0.5); add("m2", w + 1.55, 0.5);
 }
 // Step 5: gold feeds both models, then the retrain loop
-for (const w of [20.0, 20.9]) { add("g1", w, 0.8); add("g2", w, 0.6); }
+for (const w of [20.0, 20.9]) { add("g1", w, 0.8); add("g2", w, 0.7); add("g3", w, 0.55); }
 add("loop", 21.9, 1.1);
 // Outro: continuous flow through the whole system
 const STAGES = [["a1", 0], ["a2", 0.7], ["d1", 1.0], ["d2", 1.1], ["d3", 1.2], ["i1", 2.0], ["i2", 2.05], ["i3", 2.1],
-                ["i4", 2.15], ["m1", 3.0], ["m2", 3.5], ["g1", 4.0], ["g2", 4.0]];
+                ["i4", 2.15], ["m1", 3.0], ["m2", 3.5], ["g1", 4.0], ["g2", 4.0], ["g3", 4.0]];
 for (let k = 0; k < 8; k++) {
   const base = 23.2 + k * 0.85 - 4.5;   // start earlier so the whole chain is already flowing
   for (const [path, off] of STAGES) {
@@ -249,6 +258,7 @@ const BUMP = {
   gold: arrivals(["m2"]),
   k1: arrivals(["g1"]),
   k2: arrivals(["g2"]),
+  k3: arrivals(["g3"]),
 };
 const bump = (t, times, len = 0.35) =>
   times.reduce((m, a) => (t >= a && t <= a + len ? Math.max(m, Math.sin(((t - a) / len) * Math.PI)) : m), 0);
@@ -392,10 +402,11 @@ function render(t) {
   draw("m1", t, 15.3, 0.4); draw("m2", t, 15.5, 0.4);
 
   // Row 4: models + loop
-  rise("k1", t, 19.1); rise("k2", t, 19.3);
-  draw("g1", t, 19.4, 0.7); draw("g2", t, 19.4, 0.5);
+  rise("k1", t, 19.1); rise("k2", t, 19.25); rise("k3", t, 19.4);
+  draw("g1", t, 19.4, 0.7); draw("g2", t, 19.4, 0.6); draw("g3", t, 19.4, 0.45);
   $("k1r").setAttribute("stroke-width", (2 + 3 * bump(t, BUMP.k1)).toFixed(2));
   $("k2r").setAttribute("stroke-width", (2 + 3 * bump(t, BUMP.k2)).toFixed(2));
+  $("k3r").setAttribute("stroke-width", (2 + 3 * bump(t, BUMP.k3)).toFixed(2));
   draw("loop", t, 20.9, 1.0);
   setOpacity("loopLabel", easeOut(prog(t, 21.5, 0.5)));
 
