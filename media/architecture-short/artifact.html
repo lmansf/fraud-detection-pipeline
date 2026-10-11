@@ -196,17 +196,38 @@ const priceText = el("text", { x: 190, y: 302, "text-anchor": "middle", "font-si
 
 const pulse = el("circle", { cx: 540, cy: 375, r: 70, fill: "none", stroke: C.gold, "stroke-width": 3, opacity: 0 }, world);
 const nOwl = el("g", {}, world);
-const owlBody = el("g", { filter: "url(#shadow)" }, nOwl);
-el("path", { d: "M490,334 L498,298 L524,322 Z", fill: C.gold }, owlBody);
-el("path", { d: "M590,334 L582,298 L556,322 Z", fill: C.gold }, owlBody);
-el("circle", { cx: 540, cy: 375, r: 58, fill: "#16203A", stroke: C.gold, "stroke-width": 3 }, owlBody);
-const owlEyes = el("g", {}, nOwl);
-const pupils = [];
-for (const cx of [518, 562]) {
-  el("circle", { cx, cy: 368, r: 19, fill: C.gold }, owlEyes);
-  pupils.push(el("circle", { cx, cy: 368, r: 8, fill: C.bg }, owlEyes));
+// Owl illustration, drawn in local coordinates around (0,0) and placed with translate/scale.
+const OWL = { body: "#1E2A47", wing: "#141D33", belly: "#2B3B62", disc: "#F3E7CF", beak: "#E09B4F" };
+const OWL_SIL = "M-52,-68 C-35,-50 -15,-46 0,-46 C15,-46 35,-50 52,-68 C60,-38 64,-8 60,17 C56,52 32,68 0,68 C-32,68 -56,52 -60,17 C-64,-8 -60,-38 -52,-68 Z";
+function drawOwl(parent, cx, cy, sc, outline = 3) {
+  const root = el("g", { transform: `translate(${cx},${cy}) scale(${sc})` }, parent);
+  const body = el("g", { filter: "url(#shadow)" }, root);
+  el("path", { d: OWL_SIL, fill: OWL.body }, body);
+  el("path", { d: "M-58,4 C-70,24 -66,48 -48,60 C-52,42 -52,24 -46,8 Z M58,4 C70,24 66,48 48,60 C52,42 52,24 46,8 Z", fill: OWL.wing }, root);
+  el("ellipse", { cx: 0, cy: 44, rx: 32, ry: 20, fill: OWL.belly }, root);
+  el("path", { d: "M-16,34 Q-12,39 -8,34 M8,34 Q12,39 16,34 M-4,48 Q0,53 4,48", fill: "none", stroke: C.gold, "stroke-opacity": 0.55, "stroke-width": 2, "stroke-linecap": "round" }, root);
+  for (const x of [-22, 22]) el("circle", { cx: x, cy: -6, r: 26, fill: OWL.disc }, root);
+  el("path", { d: "M-52,-36 L0,-17 L52,-36 L52,-50 L-52,-50 Z", fill: OWL.body }, root);
+  const eyes = el("g", {}, root);
+  const pupils = [], shines = [];
+  for (const x of [-22, 22]) {
+    el("circle", { cx: x, cy: -6, r: 17, fill: C.gold }, eyes);
+    pupils.push(el("circle", { cx: x, cy: -6, r: 8.5, fill: C.bg }, eyes));
+    shines.push(el("circle", { cx: x - 3.5, cy: -9.5, r: 3.2, fill: "#fff" }, eyes));
+  }
+  el("path", { d: "M-7,10 Q0,28 7,10 Q0,14 -7,10 Z", fill: OWL.beak }, root);
+  el("path", { d: "M-18,68 l3,6 M-12,68 l0,7 M-6,68 l-3,6 M6,68 l3,6 M12,68 l0,7 M18,68 l-3,6", fill: "none", stroke: OWL.beak, "stroke-width": 3, "stroke-linecap": "round" }, root);
+  el("path", { d: OWL_SIL, fill: "none", stroke: C.gold, "stroke-width": outline, "stroke-linejoin": "round" }, root);
+  return {
+    root, eyes,
+    look(dx, dy) {
+      pupils.forEach((p, k) => { p.setAttribute("cx", [-22, 22][k] + dx); p.setAttribute("cy", -6 + dy); });
+      shines.forEach((h, k) => { h.setAttribute("cx", [-25.5, 18.5][k] + dx); h.setAttribute("cy", -9.5 + dy); });
+    },
+    blink(k) { T(eyes, scaleAt(0, -6, 1, 1 - 0.92 * k)); },
+  };
 }
-el("path", { d: "M532,392 L548,392 L540,406 z", fill: "#CD8A4E" }, nOwl);
+const owl = drawOwl(nOwl, 540, 364, 0.92, 3.2);
 el("text", { x: 540, y: 458, "text-anchor": "middle", "font-size": 24, "font-weight": 800, fill: C.gold }, nOwl, "Model 1");
 
 const nResponse = el("g", {}, world);
@@ -270,14 +291,7 @@ function card(x, stroke, fill, eyebrow, title, line) {
   return { g, r, icon };
 }
 const k1 = card(80, C.gold, "#16203A", "MODEL 1", "Real-time", "decides in < 100 ms");
-el("path", { d: "M108,1112 L112,1094 L124,1106 Z M152,1112 L148,1094 L136,1106 Z", fill: C.gold }, k1.icon);
-el("circle", { cx: 130, cy: 1130, r: 28, fill: "#0F172A", stroke: C.gold, "stroke-width": 2.5 }, k1.icon);
-const miniPupils = [];
-for (const cx of [119, 141]) {
-  el("circle", { cx, cy: 1126, r: 9, fill: C.gold }, k1.icon);
-  miniPupils.push(el("circle", { cx, cy: 1126, r: 4, fill: C.bg }, k1.icon));
-}
-el("path", { d: "M126,1138 L134,1138 L130,1145 z", fill: "#CD8A4E" }, k1.icon);
+const miniOwl = drawOwl(k1.icon, 130, 1128, 0.42, 5);
 
 const k2 = card(395, C.violet, "#1B1836", "MODEL 2", "Safety net", "alerts the team");
 el("path", { d: "M445,1100 L472,1110 V1131 C472,1150 459,1160 445,1167 C431,1160 418,1150 418,1131 V1110 Z", fill: "#2A2350", stroke: C.violet, "stroke-width": 2.5 }, k2.icon);
@@ -484,12 +498,12 @@ function render(t) {
 
   popIn(nOwl, 540, 375, t, 5.7, 0.6, 0.07 * bump(t, ARR.owl));
   const blink = bump(t, [4.0, 12.4, 16.9, 21.2, 25.6], 0.2);
-  T(owlEyes, scaleAt(540, 368, 1, 1 - 0.9 * blink));
+  owl.blink(blink); miniOwl.blink(blink);
   const look = P.some((p) => p.path === "a1" && t >= p.s && t <= p.s + p.d) ? -6
              : P.some((p) => p.path === "a2" && t >= p.s && t <= p.s + p.d) ? 6
              : P.some((p) => p.path === "loop" && t >= p.s && t <= p.s + p.d) ? 0 : 0;
   const lookUp = P.some((p) => p.path === "loop" && t >= p.s && t <= p.s + p.d) ? -6 : 0;
-  pupils.forEach((p, k) => { p.setAttribute("cx", [518, 562][k] + look); p.setAttribute("cy", 368 + lookUp); });
+  owl.look(look, lookUp);
   let pr = 70, po = 0;
   for (const a of ARR.owl) { const x = prog(t, a, 0.6); if (t >= a && x < 1) { pr = 70 + 75 * easeOut(x); po = 0.7 * (1 - x); } }
   pulse.setAttribute("r", pr.toFixed(1)); O(pulse, po);
@@ -555,7 +569,7 @@ function render(t) {
     const h = BAR_MAX[k] * grow * (1 + 0.12 * Math.sin(t * 3 + k * 1.7) * grow);
     b.setAttribute("y", (1146 - h).toFixed(1)); b.setAttribute("height", h.toFixed(1));
   });
-  miniPupils.forEach((p, k) => p.setAttribute("cx", [119, 141][k] + 3 * Math.sin(t * 1.4)));
+  miniOwl.look(6 * Math.sin(t * 1.4), 0);
   wire("loop", t, 21.0, 1.0);
   O(loopLabel, prog(t, 21.5, 0.5));
   O(footer, prog(t, 23.6, 0.6));
