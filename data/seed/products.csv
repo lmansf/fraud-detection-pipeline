@@ -1,0 +1,46 @@
+sku,product_name,product_type,unit_price
+DAY-1-VALUE-ADULT,1-Day Park Ticket – Adult (Value),day_ticket,89.00
+DAY-1-VALUE-CHILD,1-Day Park Ticket – Child (Value),day_ticket,74.00
+DAY-1-REG-ADULT,1-Day Park Ticket – Adult (Regular),day_ticket,109.00
+DAY-1-REG-CHILD,1-Day Park Ticket – Child (Regular),day_ticket,94.00
+DAY-1-PEAK-ADULT,1-Day Park Ticket – Adult (Peak),day_ticket,129.00
+DAY-1-PEAK-CHILD,1-Day Park Ticket – Child (Peak),day_ticket,109.00
+DAY-1-SENIOR,1-Day Park Ticket – Senior,day_ticket,79.00
+DAY-2-ADULT,2-Day Park Ticket – Adult,multi_day_ticket,199.00
+DAY-2-CHILD,2-Day Park Ticket – Child,multi_day_ticket,169.00
+DAY-3-ADULT,3-Day Park Ticket – Adult,multi_day_ticket,279.00
+DAY-3-CHILD,3-Day Park Ticket – Child,multi_day_ticket,239.00
+DAY-5-ADULT,5-Day Park Ticket – Adult,multi_day_ticket,399.00
+DAY-5-CHILD,5-Day Park Ticket – Child,multi_day_ticket,339.00
+PASS-FLEDGLING,Fledgling Annual Pass (Weekdays Only),annual_pass,299.00
+PASS-NIGHTOWL,Night Owl Annual Pass (After 4 PM),annual_pass,249.00
+PASS-SNOWY,Snowy Owl Annual Pass (Blockout Dates),annual_pass,499.00
+PASS-GREATHORN,Great Horned Annual Pass (No Blockouts),annual_pass,849.00
+HOOT-PASS,Hoot Pass Skip-the-Line,skip_line,45.00
+HOOT-PASS-PLUS,Hoot Pass Plus (Unlimited Skip-the-Line),skip_line,89.00
+HOOT-PASS-SINGLE,Single-Ride Skip – Talon Coaster,skip_line,15.00
+PARKING-DAY,Owl Park Day Parking,parking,30.00
+PARKING-PREFERRED,Owl Park Preferred Parking,parking,50.00
+PARKING-EV,Owl Park EV Charging Parking,parking,40.00
+PARKING-ANNUAL,Annual Parking Pass,parking,199.00
+HOTEL-ROOST-STD,The Roost Lodge – Standard Room (per night),hotel,189.00
+HOTEL-ROOST-FAM,The Roost Lodge – Family Suite (per night),hotel,289.00
+HOTEL-CANOPY-STD,Canopy Resort – Standard Room (per night),hotel,329.00
+HOTEL-CANOPY-STE,Canopy Resort – Treetop Suite (per night),hotel,549.00
+DINE-HOOTENANNY,Hootenanny Character Breakfast (per person),dining,39.00
+DINE-MOONLIGHT,Moonlight Feast Buffet (per person),dining,54.00
+DINE-PERCH,The Perch Steakhouse (per person),dining,79.00
+DINE-PLAN-QUICK,Quick-Service Dining Plan (per day),dining,35.00
+DINE-PLAN-FULL,Full Dining Plan (per day),dining,65.00
+GIFT-25,Owl Park Gift Card – $25,gift_card,25.00
+GIFT-50,Owl Park Gift Card – $50,gift_card,50.00
+GIFT-100,Owl Park Gift Card – $100,gift_card,100.00
+GIFT-250,Owl Park Gift Card – $250,gift_card,250.00
+GIFT-500,Owl Park Gift Card – $500,gift_card,500.00
+MERCH-PLUSH-HOOTIE,Hootie the Owl Plush,merch,24.99
+MERCH-EARS-FEATHER,Feathered Owl Ears Headband,merch,19.99
+MERCH-TEE-ADULT,Owl Park Logo Tee – Adult,merch,29.99
+MERCH-TEE-YOUTH,Owl Park Logo Tee – Youth,merch,22.99
+MERCH-HOODIE,Night Owl Hoodie,merch,59.99
+MERCH-MUG,Owl Park Collector Mug,merch,16.99
+MERCH-PHOTO-PKG,Digital Ride Photo Package,merch,34.99
