@@ -98,7 +98,7 @@ const world = el("g", {}, scene);
 // ---------- wires ----------
 const wires = el("g", { fill: "none", "stroke-width": 3, "stroke-linecap": "round", "stroke-linejoin": "round" }, world);
 const WIRES = {
-  a1: ["M232,375 H466", "#4B5B80", "arrow"],
+  a1: ["M254,375 H466", "#4B5B80", "arrow"],
   a2: ["M612,375 H844", "#4B5B80", "arrow"],
   d1: ["M190,466 V562", "#2C6B52"],
   d2: ["M540,466 V490 H420 V562", "#2C6B52"],
@@ -132,11 +132,24 @@ function phone(cx, parent) {
   return g;
 }
 const nCheckout = el("g", {}, world);
-phone(190, nCheckout);
-const slots = [342, 364, 386];
-const itemColors = [C.gold, C.teal, C.violet];
-const items = itemColors.map((fill) => el("rect", { x: -20, y: -7, width: 40, height: 14, rx: 4, fill }, nCheckout));
-el("text", { x: 190, y: 458, "text-anchor": "middle", "font-size": 24, "font-weight": 700, fill: C.fg }, nCheckout, "Checkout");
+// order generator: a terminal window streaming synthetic orders as log lines
+const term = el("g", { filter: "url(#shadow)" }, nCheckout);
+el("rect", { x: 132, y: 310, width: 116, height: 126, rx: 12, fill: "#0F1424", stroke: "#3B4A6B", "stroke-width": 2 }, term);
+el("path", { d: "M132,330 H248", stroke: "#3B4A6B", "stroke-width": 1.5 }, term);
+[[148, C.coral], [160, C.gold], [172, C.teal]].forEach(([cx, fill]) => el("circle", { cx, cy: 320, r: 3.5, fill }, term));
+const termClip = el("clipPath", { id: "termClip" }, defs);
+el("rect", { x: 136, y: 333, width: 108, height: 99 }, termClip);
+const logLayer = el("g", { "clip-path": "url(#termClip)" }, nCheckout);
+const LOG_COLORS = [C.gold, C.teal, C.violet, C.gold, C.sky, C.teal, C.coral];
+const LOG_W = [62, 48, 70, 54, 66, 44, 58];
+const logPool = Array.from({ length: 7 }, () => {
+  const g = el("g", {}, logLayer);
+  el("text", { x: 142, y: 4, "font-size": 13, "font-weight": 700, fill: C.muted }, g, "›");
+  const bar = el("rect", { x: 154, y: -5, width: 0, height: 9, rx: 3 }, g);
+  return { g, bar };
+});
+const LOG_START = 2.9, LOG_EVERY = 0.42;
+el("text", { x: 190, y: 458, "text-anchor": "middle", "font-size": 24, "font-weight": 700, fill: C.fg }, nCheckout, "Order generator");
 const pricePill = el("g", {}, nCheckout);
 el("rect", { x: 118, y: 279, width: 144, height: 34, rx: 17, fill: C.gold }, pricePill);
 const priceText = el("text", { x: 190, y: 302, "text-anchor": "middle", "font-size": 18, "font-weight": 800, fill: C.bg, "font-variant-numeric": "tabular-nums" }, pricePill, "$0.00");
@@ -262,7 +275,7 @@ const footer = el("text", { x: 540, y: 1296, "text-anchor": "middle", "font-size
 
 // ============================================================ timeline data
 const CAPTIONS = [
-  { s: 2.6, e: 5.5, title: "A guest checks out", sub: "Tickets, Hoot Passes, gift cards, all in one cart", step: 1 },
+  { s: 2.6, e: 5.5, title: "A generator streams orders", sub: "Synthetic Owl Park purchases: tickets, passes, gift cards", step: 1 },
   { s: 5.5, e: 10.5, title: "Model 1 scores it in real time", sub: "Approve or decline before checkout finishes", step: 2 },
   { s: 10.5, e: 14.5, title: "Every event lands in Supabase", sub: "Purchases, decisions and responses as raw tables", step: 3 },
   { s: 14.5, e: 19, title: "Databricks refines the data", sub: "Bronze → Silver → Gold", step: 4 },
@@ -411,13 +424,19 @@ function render(t) {
 
   // ---- row 1
   popIn(nCheckout, 190, 380, t, 2.7, 0.55);
-  items.forEach((it, k) => {
-    const s0 = 3.0 + k * 0.42, x = prog(t, s0, 0.6), e = easeInOut(x);
-    const [fx, fy, tx, ty] = [20 + k * 30, 250 - k * 20, 190, slots[k]];
-    const px = lerp(fx, tx, e), py = lerp(fy, ty, e) - Math.sin(e * Math.PI) * 70;
-    const land = bump(t, [s0 + 0.6], 0.25);
-    O(it, x > 0 ? 1 : 0);
-    T(it, `translate(${px.toFixed(1)},${py.toFixed(1)}) rotate(${((1 - e) * -160).toFixed(1)}) scale(${(1 + 0.25 * land).toFixed(3)})`);
+  // streaming log: a new order line every LOG_EVERY seconds, older lines scroll up
+  const nLines = t < LOG_START ? 0 : Math.floor((t - LOG_START) / LOG_EVERY) + 1;
+  const newest = LOG_START + (nLines - 1) * LOG_EVERY;
+  const slide = nLines ? 1 - easeOut(prog(t, newest, 0.22)) : 0;
+  logPool.forEach((slot, j) => {
+    const i = nLines - 1 - j;              // j = 0 is the newest line
+    if (i < 0) { O(slot.g, 0); return; }
+    const y = 420 - 19 * j + 19 * slide;
+    O(slot.g, j === 0 ? 1 - slide * 0.6 : 1);
+    T(slot.g, `translate(0,${y.toFixed(1)})`);
+    const born = LOG_START + i * LOG_EVERY;
+    slot.bar.setAttribute("width", (LOG_W[i % 7] * easeOut(prog(t, born, 0.3))).toFixed(1));
+    slot.bar.setAttribute("fill", LOG_COLORS[i % 7]);
   });
   popIn(pricePill, 190, 296, t, 3.1, 0.45);
   priceText.textContent = `$${(727.16 * easeOut(prog(t, 3.2, 1.5))).toFixed(2)}`;
