@@ -87,116 +87,36 @@ const glow = el("filter", { id: "glow", x: "-100%", y: "-100%", width: "300%", h
 el("feGaussianBlur", { stdDeviation: "7" }, glow);
 const soft = el("filter", { id: "shadow", x: "-30%", y: "-30%", width: "160%", height: "180%" }, defs);
 el("feDropShadow", { dx: "0", dy: "10", stdDeviation: "10", "flood-color": "#000", "flood-opacity": "0.45" }, soft);
-for (const [id, color] of [["arrow", "#4B5B80"], ["arrowGold", C.gold]]) {
+for (const [id, color] of [["arrow", "#5A6B92"], ["arrowGold", C.gold]]) {
   const m = el("marker", { id, viewBox: "0 0 10 10", refX: "8", refY: "5", markerWidth: "7", markerHeight: "7", orient: "auto-start-reverse" }, defs);
   el("path", { d: "M0,0 L10,5 L0,10 z", fill: color }, m);
 }
-for (const [id, color] of [["orbGold", C.gold], ["orbViolet", C.violet], ["orbSky", C.sky]]) {
-  const g = el("radialGradient", { id }, defs);
-  el("stop", { offset: "0%", "stop-color": color, "stop-opacity": "0.16" }, g);
-  el("stop", { offset: "100%", "stop-color": color, "stop-opacity": "0" }, g);
+function grad(id, stops, attrs = {}, kind = "linearGradient") {
+  const g = el(kind, { id, ...attrs }, defs);
+  stops.forEach(([o, c, a = 1]) => el("stop", { offset: o, "stop-color": c, "stop-opacity": a }, g));
 }
-const hdrGrad = el("linearGradient", { id: "hdrFade", x1: "0", y1: "0", x2: "0", y2: "1" }, defs);
-el("stop", { offset: "0.88", "stop-color": C.bg, "stop-opacity": "1" }, hdrGrad);
-el("stop", { offset: "1", "stop-color": C.bg, "stop-opacity": "0" }, hdrGrad);
-const ftrGrad = el("linearGradient", { id: "ftrFade", x1: "0", y1: "0", x2: "0", y2: "1" }, defs);
-el("stop", { offset: "0", "stop-color": C.bg, "stop-opacity": "0" }, ftrGrad);
-el("stop", { offset: "0.35", "stop-color": C.bg, "stop-opacity": "1" }, ftrGrad);
+grad("orbGold", [["0%", C.gold, 0.16], ["100%", C.gold, 0]], {}, "radialGradient");
+grad("orbViolet", [["0%", C.violet, 0.16], ["100%", C.violet, 0]], {}, "radialGradient");
+grad("orbSky", [["0%", C.sky, 0.14], ["100%", C.sky, 0]], {}, "radialGradient");
+grad("hdrFade", [["0.88", C.bg], ["1", C.bg, 0]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+grad("ftrFade", [["0", C.bg, 0], ["0.35", C.bg]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+grad("supaPanel", [["0", "#11241F"], ["1", "#0A1514"]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+grad("dbxPanel", [["0", "#21160F"], ["1", "#140E0C"]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+grad("cylBody", [["0", "#0C3026"], ["0.62", "#1E6A50"], ["1", "#0C3026"]], { x1: 0, y1: 0, x2: 1, y2: 0 });
+grad("liquid", [["0", "#6EF0B4"], ["1", "#23A26B"]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+grad("coinBronze", [["0%", "#EDB27A"], ["100%", "#A4632F"]], { cx: "38%", cy: "32%", r: "75%" }, "radialGradient");
+grad("coinSilver", [["0%", "#F7F9FC"], ["100%", "#97A3B5"]], { cx: "38%", cy: "32%", r: "75%" }, "radialGradient");
+grad("coinGold", [["0%", "#FFE69A"], ["100%", "#D49B12"]], { cx: "38%", cy: "32%", r: "75%" }, "radialGradient");
+grad("device", [["0", "#2A3752"], ["1", "#141B2D"]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+grad("shield", [["0", "#8B6CF0"], ["1", "#3A2A80"]], { x1: 0, y1: 0, x2: 0, y2: 1 });
+grad("barGrad", [["0", "#7DD3FC"], ["1", "#0EA5E9"]], { x1: 0, y1: 0, x2: 0, y2: 1 });
 const dotPat = el("pattern", { id: "dotgrid", width: "36", height: "36", patternUnits: "userSpaceOnUse" }, defs);
 el("circle", { cx: "2", cy: "2", r: "1.4", fill: "#18223B" }, dotPat);
 const irisMask = el("mask", { id: "iris", maskUnits: "userSpaceOnUse", x: "0", y: "0", width: "1080", height: "1350" }, defs);
 el("rect", { width: "1080", height: "1350", fill: "#000" }, irisMask);
 const irisC = el("circle", { cx: "540", cy: "520", r: "0", fill: "#fff" }, irisMask);
 
-// ============================================================ intro layer
-el("rect", { width: "1080", height: "1350", fill: C.bg });
-const intro = el("g");
-const owlIntro = el("g", {}, intro);
-const introEyes = el("g", {}, owlIntro);
-for (const cx of [468, 612]) {
-  el("circle", { cx, cy: 520, r: 54, fill: C.gold }, introEyes);
-  el("circle", { cx, cy: 520, r: 25, fill: C.bg }, introEyes);
-  el("circle", { cx: cx - 8, cy: 511, r: 7, fill: C.fg }, introEyes);
-}
-el("path", { d: "M526,588 L554,588 L540,612 z", fill: "#CD8A4E" }, owlIntro);
-const introTitle = el("text", { x: 540, y: 712, "text-anchor": "middle", "font-size": 66, "font-weight": 800, fill: C.fg }, intro, "Catching fraud at Owl Park");
-const introSub = el("text", { x: 540, y: 772, "text-anchor": "middle", "font-size": 32, fill: C.muted }, intro, "How the data pipeline works, in under 30 seconds");
-
-// ============================================================ scene layer (revealed by the iris wipe)
-const scene = el("g", { mask: "url(#iris)" });
-const irisRing = el("circle", { cx: 540, cy: 520, r: 0, fill: "none", stroke: C.gold, "stroke-width": 10 });
-el("rect", { width: "1080", height: "1350", fill: C.bg }, scene);
-const orbs = [
-  el("circle", { r: 460, fill: "url(#orbGold)" }, scene),
-  el("circle", { r: 520, fill: "url(#orbViolet)" }, scene),
-  el("circle", { r: 420, fill: "url(#orbSky)" }, scene),
-];
-el("rect", { width: "1080", height: "1350", fill: "url(#dotgrid)" }, scene);
-
-const world = el("g", {}, scene);
-
-// ---------- wires ----------
-const wires = el("g", { fill: "none", "stroke-width": 3, "stroke-linecap": "round", "stroke-linejoin": "round" }, world);
-const WIRES = {
-  a1: ["M254,375 H466", "#4B5B80", "arrow"],
-  a2: ["M612,375 H844", "#4B5B80", "arrow"],
-  d1: ["M190,466 V562", "#2C6B52"],
-  d2: ["M540,466 V490 H420 V562", "#2C6B52"],
-  d3: ["M890,466 V490 H650 V562", "#2C6B52"],
-  i1: ["M190,690 V725 H250 V820", "#7A4A33"],
-  i2: ["M420,690 V725 H250 V820", "#7A4A33"],
-  i3: ["M650,690 V725 H250 V820", "#7A4A33"],
-  i4: ["M880,690 V725 H250 V820", "#7A4A33"],
-  m1: ["M305,875 H477", "#4B5B80", "arrow"],
-  m2: ["M595,875 H767", "#4B5B80", "arrow"],
-  g1: ["M885,875 H960 V1025 H225 V1060", "#6B5A2A"],
-  g2: ["M885,875 H960 V1025 H540 V1060", "#6B5A2A"],
-  g3: ["M885,875 H960 V1060", "#6B5A2A"],
-  loop: ["M80,1130 H45 V270 H540 V296", C.gold, "arrowGold"],
-};
-const pathLen = {};
-for (const [id, [d, stroke, marker]] of Object.entries(WIRES)) {
-  const p = el("path", { id, d, stroke }, wires);
-  if (marker) p.setAttribute("marker-end", `url(#${marker})`);
-  pathLen[id] = p.getTotalLength();
-  p.style.strokeDasharray = `${pathLen[id]} ${pathLen[id]}`;
-}
-const loopLabel = el("text", { x: 64, y: 260, "font-size": 19, "font-weight": 600, "font-style": "italic", fill: C.gold }, world, "retrain & deploy");
-
-// ---------- row 1: checkout phone, owl model, response phone ----------
-function phone(cx, parent) {
-  const g = el("g", { filter: "url(#shadow)" }, parent);
-  el("rect", { x: cx - 35, y: 312, width: 70, height: 122, rx: 13, fill: "#1E293B", stroke: "#3B4A6B", "stroke-width": 2 }, g);
-  el("rect", { x: cx - 27, y: 326, width: 54, height: 88, rx: 6, fill: "#0B1220" }, g);
-  el("circle", { cx, cy: 424, r: 4, fill: "#3B4A6B" }, g);
-  return g;
-}
-const nCheckout = el("g", {}, world);
-// order generator: a terminal window streaming synthetic orders as log lines
-const term = el("g", { filter: "url(#shadow)" }, nCheckout);
-el("rect", { x: 132, y: 310, width: 116, height: 126, rx: 12, fill: "#0F1424", stroke: "#3B4A6B", "stroke-width": 2 }, term);
-el("path", { d: "M132,330 H248", stroke: "#3B4A6B", "stroke-width": 1.5 }, term);
-[[148, C.coral], [160, C.gold], [172, C.teal]].forEach(([cx, fill]) => el("circle", { cx, cy: 320, r: 3.5, fill }, term));
-const termClip = el("clipPath", { id: "termClip" }, defs);
-el("rect", { x: 136, y: 333, width: 108, height: 99 }, termClip);
-const logLayer = el("g", { "clip-path": "url(#termClip)" }, nCheckout);
-const LOG_COLORS = [C.gold, C.teal, C.violet, C.gold, C.sky, C.teal, C.coral];
-const LOG_W = [62, 48, 70, 54, 66, 44, 58];
-const logPool = Array.from({ length: 7 }, () => {
-  const g = el("g", {}, logLayer);
-  el("text", { x: 142, y: 4, "font-size": 13, "font-weight": 700, fill: C.muted }, g, "›");
-  const bar = el("rect", { x: 154, y: -5, width: 0, height: 9, rx: 3 }, g);
-  return { g, bar };
-});
-const LOG_START = 2.9, LOG_EVERY = 0.42;
-el("text", { x: 190, y: 458, "text-anchor": "middle", "font-size": 24, "font-weight": 700, fill: C.fg }, nCheckout, "Order generator");
-const pricePill = el("g", {}, nCheckout);
-el("rect", { x: 118, y: 279, width: 144, height: 34, rx: 17, fill: C.gold }, pricePill);
-const priceText = el("text", { x: 190, y: 302, "text-anchor": "middle", "font-size": 18, "font-weight": 800, fill: C.bg, "font-variant-numeric": "tabular-nums" }, pricePill, "0 orders");
-
-const pulse = el("circle", { cx: 540, cy: 375, r: 70, fill: "none", stroke: C.gold, "stroke-width": 3, opacity: 0 }, world);
-const nOwl = el("g", {}, world);
-// Owl illustration, drawn in local coordinates around (0,0) and placed with translate/scale.
+// ============================================================ the owl (shared illustration)
 const OWL = { body: "#1E2A47", wing: "#141D33", belly: "#2B3B62", disc: "#F3E7CF", beak: "#E09B4F" };
 const OWL_SIL = "M-52,-68 C-35,-50 -15,-46 0,-46 C15,-46 35,-50 52,-68 C60,-38 64,-8 60,17 C56,52 32,68 0,68 C-32,68 -56,52 -60,17 C-64,-8 -60,-38 -52,-68 Z";
 function drawOwl(parent, cx, cy, sc, outline = 3) {
@@ -227,60 +147,167 @@ function drawOwl(parent, cx, cy, sc, outline = 3) {
     blink(k) { T(eyes, scaleAt(0, -6, 1, 1 - 0.92 * k)); },
   };
 }
-const owl = drawOwl(nOwl, 540, 364, 0.92, 3.2);
-el("text", { x: 540, y: 458, "text-anchor": "middle", "font-size": 24, "font-weight": 800, fill: C.gold }, nOwl, "Model 1");
+function gearPath(r1, r2, teeth) {
+  let d = "";
+  for (let i = 0; i < teeth * 2; i++) {
+    const a0 = (Math.PI * i) / teeth, a1 = (Math.PI * (i + 1)) / teeth, r = i % 2 ? r2 : r1;
+    d += `${i ? "L" : "M"}${(r * Math.cos(a0 + 0.08)).toFixed(2)},${(r * Math.sin(a0 + 0.08)).toFixed(2)} L${(r * Math.cos(a1 - 0.08)).toFixed(2)},${(r * Math.sin(a1 - 0.08)).toFixed(2)} `;
+  }
+  return d + "Z";
+}
 
-const nResponse = el("g", {}, world);
-phone(890, nResponse);
-const stampOK = el("g", {}, nResponse);
-el("circle", { cx: 890, cy: 369, r: 21, fill: C.teal }, stampOK);
-el("path", { d: "M879,369 L887,377 L901,361", fill: "none", stroke: C.bg, "stroke-width": 4.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, stampOK);
-const stampNO = el("g", {}, nResponse);
-el("circle", { cx: 890, cy: 369, r: 21, fill: C.coral }, stampNO);
-el("path", { d: "M882,361 L898,377 M898,361 L882,377", fill: "none", stroke: C.bg, "stroke-width": 4.5, "stroke-linecap": "round" }, stampNO);
-el("text", { x: 890, y: 458, "text-anchor": "middle", "font-size": 24, "font-weight": 700, fill: C.fg }, nResponse, "Response");
-const latPill = el("g", {}, nResponse);
+// ============================================================ intro layer
+el("rect", { width: "1080", height: "1350", fill: C.bg });
+const intro = el("g");
+const introOwlWrap = el("g", {}, intro);
+const introOwl = drawOwl(introOwlWrap, 540, 500, 1.55, 3);
+const introTitle = el("text", { x: 540, y: 712, "text-anchor": "middle", "font-size": 66, "font-weight": 800, fill: C.fg }, intro, "Catching fraud at Owl Park");
+const introSub = el("text", { x: 540, y: 772, "text-anchor": "middle", "font-size": 32, fill: C.muted }, intro, "How the data pipeline works, in under 30 seconds");
+
+// ============================================================ scene layer (revealed by the iris wipe)
+const scene = el("g", { mask: "url(#iris)" });
+const irisRing = el("circle", { cx: 540, cy: 520, r: 0, fill: "none", stroke: C.gold, "stroke-width": 10 });
+el("rect", { width: "1080", height: "1350", fill: C.bg }, scene);
+const orbs = [
+  el("circle", { r: 460, fill: "url(#orbGold)" }, scene),
+  el("circle", { r: 520, fill: "url(#orbViolet)" }, scene),
+  el("circle", { r: 420, fill: "url(#orbSky)" }, scene),
+];
+el("rect", { width: "1080", height: "1350", fill: "url(#dotgrid)" }, scene);
+const world = el("g", {}, scene);
+
+// ---------- panels (behind everything) ----------
+// Databricks: a column for the generator job, widening at the bottom into the medallion layers.
+const dbxColumn = el("rect", { x: 80, y: 318, width: 220, height: 422, rx: 26, fill: "url(#dbxPanel)", stroke: C.dbx, "stroke-opacity": 0.5, "stroke-width": 2 }, world);
+const dbxFull = el("path", {
+  d: "M106,318 H274 Q300,318 300,344 V734 Q300,760 326,760 H974 Q1000,760 1000,786 V964 Q1000,990 974,990 H106 Q80,990 80,964 V344 Q80,318 106,318 Z",
+  fill: "url(#dbxPanel)", stroke: C.dbx, "stroke-opacity": 0.5, "stroke-width": 2,
+}, world);
+const dbxTitle = el("text", { x: 190, y: 350, "text-anchor": "middle", "font-size": 16, "font-weight": 800, "letter-spacing": 4, fill: C.dbx }, world, "DATABRICKS");
+const medLabel = el("text", { x: 980, y: 796, "text-anchor": "end", "font-size": 16, "font-weight": 800, "letter-spacing": 4, fill: C.dbx }, world, "MEDALLION LAYERS");
+const bSupa = el("g", {}, world);
+el("rect", { x: 330, y: 520, width: 670, height: 182, rx: 26, fill: "url(#supaPanel)", stroke: C.supa, "stroke-opacity": 0.5, "stroke-width": 2 }, bSupa);
+const supaLabel = el("text", { x: 980, y: 554, "text-anchor": "end", "font-size": 16, "font-weight": 800, "letter-spacing": 4, fill: C.supa }, bSupa, "SUPABASE");
+el("tspan", { "font-weight": 400, "letter-spacing": 1, fill: C.muted }, supaLabel, "  ·  raw tables");
+
+// ---------- wires ----------
+const wires = el("g", { fill: "none", "stroke-width": 3, "stroke-linecap": "round", "stroke-linejoin": "round" }, world);
+const WIRES = {
+  a1: ["M258,418 C340,418 420,382 500,382", "#5A6B92", "arrow"],
+  a2: ["M650,382 H846", "#5A6B92", "arrow"],
+  d1: ["M190,530 V546 H420 V572", "#2C6B52"],
+  d2: ["M575,504 V572", "#2C6B52"],
+  d3: ["M890,504 V522 H730 V572", "#2C6B52"],
+  i1: ["M420,702 V730 H250 V816", "#7A4A33"],
+  i2: ["M575,702 V730 H250 V816", "#7A4A33"],
+  i3: ["M730,702 V730 H250 V816", "#7A4A33"],
+  i4: ["M885,702 V730 H250 V816", "#7A4A33"],
+  m1: ["M308,875 H477", "#5A6B92", "arrow"],
+  m2: ["M598,875 H767", "#5A6B92", "arrow"],
+  g1: ["M888,875 H960 V1025 H225 V1060", "#6B5A2A"],
+  g2: ["M888,875 H960 V1025 H540 V1060", "#6B5A2A"],
+  g3: ["M888,875 H960 V1060", "#6B5A2A"],
+  loop: ["M80,1130 H45 V266 H575 V296", C.gold, "arrowGold"],
+};
+const pathLen = {};
+for (const [id, [d, stroke, marker]] of Object.entries(WIRES)) {
+  const p = el("path", { id, d, stroke }, wires);
+  if (marker) p.setAttribute("marker-end", `url(#${marker})`);
+  pathLen[id] = p.getTotalLength();
+  p.style.strokeDasharray = `${pathLen[id]} ${pathLen[id]}`;
+}
+const loopLabel = el("text", { x: 64, y: 256, "font-size": 19, "font-weight": 600, "font-style": "italic", fill: C.gold }, world, "retrain & deploy");
+
+// ---------- order generator (Databricks job) ----------
+const nGen = el("g", {}, world);
+const term = el("g", { filter: "url(#shadow)" }, nGen);
+el("rect", { x: 126, y: 366, width: 128, height: 106, rx: 12, fill: "#0E1322", stroke: C.dbx, "stroke-opacity": 0.65, "stroke-width": 2 }, term);
+el("path", { d: "M126,378 Q126,366 138,366 H242 Q254,366 254,378 V386 H126 Z", fill: "#1B2234" }, term);
+[[140, C.coral], [152, C.gold], [164, C.teal]].forEach(([cx, fill]) => el("circle", { cx, cy: 376, r: 3.5, fill }, term));
+const termClip = el("clipPath", { id: "termClip" }, defs);
+el("rect", { x: 130, y: 389, width: 120, height: 80 }, termClip);
+const logLayer = el("g", { "clip-path": "url(#termClip)" }, nGen);
+const LOG_COLORS = [C.gold, C.teal, C.violet, C.gold, C.sky, C.teal, C.coral];
+const LOG_W = [70, 52, 78, 58, 74, 48, 64];
+const logPool = Array.from({ length: 6 }, () => {
+  const g = el("g", {}, logLayer);
+  el("text", { x: 136, y: 4, "font-size": 13, "font-weight": 700, fill: C.muted }, g, "›");
+  const bar = el("rect", { x: 148, y: -5, width: 0, height: 9, rx: 3 }, g);
+  return { g, bar };
+});
+const LOG_START = 2.9, LOG_EVERY = 0.42;
+const gear = el("g", {}, nGen);
+el("circle", { cx: 0, cy: 0, r: 17, fill: C.dbx }, gear);
+const gearSpin = el("path", { d: gearPath(12, 9, 8), fill: "#2A1208" }, gear);
+el("circle", { cx: 0, cy: 0, r: 4, fill: C.dbx }, gear);
+el("text", { x: 190, y: 500, "text-anchor": "middle", "font-size": 21, "font-weight": 700, fill: C.fg }, nGen, "Order generator");
+el("text", { x: 190, y: 521, "text-anchor": "middle", "font-size": 15, fill: C.muted }, nGen, "streaming job");
+const countPill = el("g", {}, nGen);
+el("rect", { x: 116, y: 279, width: 148, height: 34, rx: 17, fill: C.gold }, countPill);
+const countText = el("text", { x: 190, y: 302, "text-anchor": "middle", "font-size": 17, "font-weight": 800, fill: C.bg, "font-variant-numeric": "tabular-nums" }, countPill, "0 orders");
+
+// ---------- Model 1 owl ----------
+const pulse = el("circle", { cx: 575, cy: 378, r: 72, fill: "none", stroke: C.gold, "stroke-width": 3, opacity: 0 }, world);
+const nOwl = el("g", {}, world);
+const owl = drawOwl(nOwl, 575, 372, 0.92, 3.2);
+el("text", { x: 575, y: 474, "text-anchor": "middle", "font-size": 21, "font-weight": 800, fill: C.gold }, nOwl, "Model 1");
+el("text", { x: 575, y: 495, "text-anchor": "middle", "font-size": 15, fill: C.muted }, nOwl, "real-time score");
+
+// ---------- response device ----------
+const nResp = el("g", {}, world);
+const dev = el("g", { filter: "url(#shadow)" }, nResp);
+el("rect", { x: 850, y: 316, width: 80, height: 138, rx: 16, fill: "url(#device)", stroke: "#3B4A6B", "stroke-width": 2 }, dev);
+el("rect", { x: 858, y: 330, width: 64, height: 112, rx: 8, fill: "#0B1220" }, dev);
+el("rect", { x: 880, y: 322, width: 20, height: 4, rx: 2, fill: "#3B4A6B" }, dev);
+el("rect", { x: 864, y: 338, width: 52, height: 96, rx: 5, fill: "#E8EDF5" }, nResp);
+[[872, 350, 30], [872, 362, 22], [872, 418, 36]].forEach(([x, y, w]) => el("rect", { x, y, width: w, height: 5, rx: 2.5, fill: "#B6C0D0" }, nResp));
+const stampOK = el("g", {}, nResp);
+el("circle", { cx: 890, cy: 389, r: 18, fill: "none", stroke: C.teal, "stroke-width": 3 }, stampOK);
+el("path", { d: "M881,389 L888,396 L900,382", fill: "none", stroke: C.teal, "stroke-width": 4, "stroke-linecap": "round", "stroke-linejoin": "round" }, stampOK);
+const stampNO = el("g", {}, nResp);
+el("circle", { cx: 890, cy: 389, r: 18, fill: "none", stroke: C.coral, "stroke-width": 3 }, stampNO);
+el("path", { d: "M883,382 L897,396 M897,382 L883,396", fill: "none", stroke: C.coral, "stroke-width": 4, "stroke-linecap": "round" }, stampNO);
+el("text", { x: 890, y: 478, "text-anchor": "middle", "font-size": 21, "font-weight": 700, fill: C.fg }, nResp, "Response");
+el("text", { x: 890, y: 499, "text-anchor": "middle", "font-size": 15, fill: C.muted }, nResp, "approve or decline");
+const latPill = el("g", {}, nResp);
 const latRect = el("rect", { x: 795, y: 279, width: 190, height: 34, rx: 17, fill: C.teal }, latPill);
 const latText = el("text", { x: 890, y: 302, "text-anchor": "middle", "font-size": 16, "font-weight": 800, fill: C.bg, "letter-spacing": "0.5" }, latPill, "");
 
-// ---------- row 2: Supabase panel with database cylinders ----------
-const bSupa = el("g", {}, world);
-el("rect", { x: 80, y: 510, width: 920, height: 180, rx: 26, fill: "#0D1A1C", stroke: C.supa, "stroke-opacity": 0.5, "stroke-width": 2 }, bSupa);
-const supaLabel = el("text", { x: 980, y: 546, "text-anchor": "end", "font-size": 20, "font-weight": 800, "letter-spacing": 4, fill: C.supa }, bSupa, "SUPABASE");
-el("tspan", { "font-weight": 400, "letter-spacing": 1, fill: C.muted }, supaLabel, "  ·  raw tables");
-const CYL = [[190, "transactions"], [420, "decisions"], [650, "responses"], [880, "fraud truth"]];
+// ---------- Supabase cylinders ----------
+const CYL = [[420, "transactions"], [575, "decisions"], [730, "responses"], [885, "fraud truth"]];
 const cyls = CYL.map(([cx, label], k) => {
   const g = el("g", {}, world);
-  const body = `M${cx - 38},574 L${cx - 38},636 A38 10 0 0 0 ${cx + 38},636 L${cx + 38},574 A38 10 0 0 1 ${cx - 38},574 Z`;
+  const body = `M${cx - 38},584 L${cx - 38},646 A38 10 0 0 0 ${cx + 38},646 L${cx + 38},584 A38 10 0 0 1 ${cx - 38},584 Z`;
   const clip = el("clipPath", { id: `cylClip${k}` }, defs);
   el("path", { d: body }, clip);
-  el("path", { d: body, fill: "#0B2A22", stroke: C.supa, "stroke-width": 1.5, "stroke-dasharray": k === 3 ? "5 5" : "none" }, g);
-  const liquid = el("rect", { x: cx - 40, y: 646, width: 80, height: 0, fill: C.supa, opacity: 0.5, "clip-path": `url(#cylClip${k})` }, g);
-  el("ellipse", { cx, cy: 574, rx: 38, ry: 10, fill: "#13382C", stroke: C.supa, "stroke-width": 1.5, "stroke-dasharray": k === 3 ? "5 5" : "none" }, g);
-  el("text", { x: cx, y: 672, "text-anchor": "middle", "font-size": 18, "font-weight": 600, fill: "#E2E8F0" }, g, label);
+  const dash = k === 3 ? "5 5" : "none";
+  el("path", { d: body, fill: "url(#cylBody)", stroke: C.supa, "stroke-width": 1.5, "stroke-dasharray": dash }, g);
+  const liquid = el("path", { d: "", fill: "url(#liquid)", opacity: 0.85, "clip-path": `url(#cylClip${k})` }, g);
+  el("path", { d: `M${cx - 28},592 V640`, stroke: "#fff", "stroke-opacity": 0.18, "stroke-width": 5, "stroke-linecap": "round" }, g);
+  el("ellipse", { cx, cy: 584, rx: 38, ry: 10, fill: "#16503D", stroke: C.supa, "stroke-width": 1.5, "stroke-dasharray": dash }, g);
+  el("ellipse", { cx, cy: 584, rx: 26, ry: 5, fill: "#0C3026" }, g);
+  el("text", { x: cx, y: 684, "text-anchor": "middle", "font-size": 17, "font-weight": 600, fill: "#E2E8F0" }, g, label);
   return { g, liquid, cx };
 });
 
-// ---------- row 3: Databricks panel with medallion coins ----------
-const bDbx = el("g", {}, world);
-el("rect", { x: 80, y: 760, width: 920, height: 230, rx: 26, fill: "#1A1311", stroke: C.dbx, "stroke-opacity": 0.5, "stroke-width": 2 }, bDbx);
-const dbxLabel = el("text", { x: 980, y: 796, "text-anchor": "end", "font-size": 20, "font-weight": 800, "letter-spacing": 4, fill: C.dbx }, bDbx, "DATABRICKS");
-el("tspan", { "font-weight": 400, "letter-spacing": 1, fill: C.muted }, dbxLabel, "  ·  medallion");
-const COINS = [[250, "#CD8A4E", "Bronze", "raw copy"], [540, "#C9D1DC", "Silver", "clean & joined"], [830, "#F5C542", "Gold", "ML features"]];
-const coins = COINS.map(([cx, fill, name, sub], k) => {
+// ---------- medallion coins ----------
+const COINS = [[250, "coinBronze", "#7A4520", "Bronze", "raw copy"], [540, "coinSilver", "#6E7A8C", "Silver", "clean & joined"], [830, "coinGold", "#9A6E08", "Gold", "ML features"]];
+const coins = COINS.map(([cx, fill, edge, name, sub], k) => {
   const clip = el("clipPath", { id: `coinClip${k}` }, defs);
   el("circle", { cx, cy: 875, r: 55 }, clip);
   const g = el("g", {}, world);
   const face = el("g", { filter: "url(#shadow)" }, g);
-  el("circle", { cx, cy: 875, r: 55, fill }, face);
-  el("circle", { cx, cy: 875, r: 45, fill: "none", stroke: "#000", "stroke-opacity": 0.16, "stroke-width": 4 }, face);
-  el("text", { x: cx, y: 884, "text-anchor": "middle", "font-size": 25, "font-weight": 800, fill: C.ink }, face, name);
-  const shine = el("rect", { x: cx - 14, y: 790, width: 28, height: 170, fill: "#fff", opacity: 0.4, "clip-path": `url(#coinClip${k})` }, g);
-  const label = el("text", { x: cx, y: 962, "text-anchor": "middle", "font-size": 20, fill: C.muted }, world, sub);
+  el("circle", { cx, cy: 882, r: 55, fill: edge }, face);
+  el("circle", { cx, cy: 875, r: 55, fill: `url(#${fill})` }, face);
+  el("circle", { cx, cy: 875, r: 45, fill: "none", stroke: edge, "stroke-opacity": 0.5, "stroke-width": 3 }, face);
+  el("circle", { cx, cy: 875, r: 42, fill: "none", stroke: "#fff", "stroke-opacity": 0.35, "stroke-width": 1.5 }, face);
+  el("text", { x: cx, y: 884, "text-anchor": "middle", "font-size": 24, "font-weight": 800, fill: C.ink }, face, name);
+  const shine = el("rect", { x: cx - 14, y: 790, width: 28, height: 170, fill: "#fff", opacity: 0.45, "clip-path": `url(#coinClip${k})` }, g);
+  const label = el("text", { x: cx, y: 966, "text-anchor": "middle", "font-size": 19, fill: C.muted }, world, sub);
   return { g, face, shine, label, cx };
 });
 
-// ---------- row 4: outputs ----------
+// ---------- outputs ----------
 function card(x, stroke, fill, eyebrow, title, line) {
   const g = el("g", {}, world);
   const r = el("rect", { x, y: 1060, width: 290, height: 140, rx: 24, fill, stroke, "stroke-width": 2, filter: "url(#shadow)" }, g);
@@ -292,18 +319,18 @@ function card(x, stroke, fill, eyebrow, title, line) {
 }
 const k1 = card(80, C.gold, "#16203A", "MODEL 1", "Real-time", "decides in < 100 ms");
 const miniOwl = drawOwl(k1.icon, 130, 1128, 0.42, 5);
-
 const k2 = card(395, C.violet, "#1B1836", "MODEL 2", "Safety net", "alerts the team");
-el("path", { d: "M445,1100 L472,1110 V1131 C472,1150 459,1160 445,1167 C431,1160 418,1150 418,1131 V1110 Z", fill: "#2A2350", stroke: C.violet, "stroke-width": 2.5 }, k2.icon);
-el("path", { d: "M434,1132 L442,1140 L457,1124", fill: "none", stroke: C.violet, "stroke-width": 3.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, k2.icon);
+el("path", { d: "M445,1098 L473,1108 V1130 C473,1150 460,1161 445,1168 C430,1161 417,1150 417,1130 V1108 Z", fill: "url(#shield)", stroke: "#C4B5FD", "stroke-width": 2 }, k2.icon);
+el("path", { d: "M434,1132 L442,1140 L457,1123", fill: "none", stroke: "#fff", "stroke-width": 3.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, k2.icon);
 const badge = el("g", {}, k2.icon);
-el("circle", { cx: 470, cy: 1102, r: 12, fill: C.coral }, badge);
-const badgeText = el("text", { x: 470, y: 1107, "text-anchor": "middle", "font-size": 14, "font-weight": 800, fill: "#fff" }, badge, "0");
-
+el("circle", { cx: 471, cy: 1100, r: 12, fill: C.coral, stroke: "#1B1836", "stroke-width": 2.5 }, badge);
+const badgeText = el("text", { x: 471, y: 1105, "text-anchor": "middle", "font-size": 13, "font-weight": 800, fill: "#fff" }, badge, "0");
 const k3 = card(710, C.sky, "#0F1F2C", "SELF-SERVICE BI", "Dashboards", "built with Claude");
-el("rect", { x: 732, y: 1104, width: 56, height: 50, rx: 7, fill: "#0B2233", stroke: C.sky, "stroke-width": 2 }, k3.icon);
-const BAR_MAX = [20, 30, 14, 36];
-const bars = BAR_MAX.map((_, k) => el("rect", { x: 739 + k * 11.5, y: 1146, width: 8, height: 0, rx: 2, fill: C.sky }, k3.icon));
+el("rect", { x: 728, y: 1100, width: 64, height: 58, rx: 8, fill: "#0B2233", stroke: C.sky, "stroke-width": 2 }, k3.icon);
+el("rect", { x: 728, y: 1100, width: 64, height: 11, rx: 8, fill: "#123A55" }, k3.icon);
+const BAR_MAX = [16, 26, 12, 32];
+const bars = BAR_MAX.map((_, k) => el("rect", { x: 736 + k * 13, y: 1150, width: 9, height: 0, rx: 2, fill: "url(#barGrad)" }, k3.icon));
+const spark = el("polyline", { points: "", fill: "none", stroke: C.gold, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, k3.icon);
 
 // ---------- particles (comet trails) ----------
 const partLayer = el("g", {}, world);
@@ -313,7 +340,7 @@ for (let i = 0; i < 80; i++) {
   const g = el("g", {}, partLayer);
   const halo = el("circle", { r: 13, filter: "url(#glow)", opacity: 0.9 }, g);
   const ghosts = [];
-  for (let j = TRAIL - 1; j >= 1; j--) ghosts.unshift(el("circle", { r: 6 * (1 - j * 0.15) }, g));
+  for (let j = 1; j < TRAIL; j++) ghosts.push(el("circle", { r: 6 * (1 - j * 0.15) }, g));
   const core = el("circle", { r: 6.5 }, g);
   pool.push({ g, halo, ghosts, core });
 }
@@ -325,13 +352,13 @@ const header = el("g", {}, scene);
 el("text", { x: 540, y: 96, "text-anchor": "middle", "font-size": 22, "font-weight": 700, "letter-spacing": 5, fill: C.gold }, header, "OWL PARK · FRAUD DETECTION PIPELINE");
 const capLayer = el("g", {}, header);
 const dots = [0, 1, 2, 3, 4].map(() => el("rect", { y: 241, height: 10, rx: 5 }, header));
-const footer = el("text", { x: 540, y: 1296, "text-anchor": "middle", "font-size": 23, fill: C.muted, "letter-spacing": 0.5 }, scene, "Synthetic data  ·  Supabase  ·  Databricks  ·  2 ML models  ·  BI");
+const footer = el("text", { x: 540, y: 1296, "text-anchor": "middle", "font-size": 23, fill: C.muted, "letter-spacing": 0.5 }, scene, "Synthetic data  ·  Databricks  ·  Supabase  ·  2 ML models  ·  BI");
 
 // ============================================================ timeline data
 const CAPTIONS = [
-  { s: 2.6, e: 5.5, title: "A generator streams orders", sub: "Synthetic Owl Park purchases: tickets, passes, gift cards", step: 1 },
-  { s: 5.5, e: 10.5, title: "Model 1 scores it in real time", sub: "Approve or decline before checkout finishes", step: 2 },
-  { s: 10.5, e: 14.5, title: "Every event lands in Supabase", sub: "Purchases, decisions and responses as raw tables", step: 3 },
+  { s: 2.6, e: 5.5, title: "A generator streams orders", sub: "A Databricks job creates synthetic Owl Park purchases", step: 1 },
+  { s: 5.5, e: 10.5, title: "Model 1 scores each one live", sub: "Approve or decline before the order completes", step: 2 },
+  { s: 10.5, e: 14.5, title: "Every event lands in Supabase", sub: "Orders, decisions and responses as raw tables", step: 3 },
   { s: 14.5, e: 19, title: "Databricks refines the data", sub: "Bronze → Silver → Gold", step: 4 },
   { s: 19, e: 23, title: "Gold powers every output", sub: "Two models plus self-service dashboards", step: 5 },
   { s: 23, e: DURATION + 1, title: "Fraud stopped in milliseconds", sub: "with a batch safety net for anything missed", step: 6 },
@@ -339,8 +366,8 @@ const CAPTIONS = [
 
 // Camera keyframes: world point (cx, cy) is placed at screen (540, 750) with zoom s.
 const CAM = [
-  [0, 190, 372, 1.9], [5.4, 190, 372, 1.9], [6.3, 540, 380, 1.18], [10.4, 540, 380, 1.18],
-  [11.3, 540, 485, 1.12], [14.4, 540, 485, 1.12], [15.3, 540, 750, 1.1], [18.9, 540, 750, 1.1],
+  [0, 190, 410, 1.8], [5.4, 190, 410, 1.8], [6.3, 556, 400, 1.17], [10.4, 556, 400, 1.17],
+  [11.3, 540, 492, 1.1], [14.4, 540, 492, 1.1], [15.3, 540, 750, 1.1], [18.9, 540, 750, 1.1],
   [19.8, 540, 1000, 1.1], [22.9, 540, 1000, 1.1], [24.3, 540, 750, 1.0],
 ];
 function camera(t) {
@@ -356,7 +383,7 @@ const P = [];
 const add = (path, s, d, color = C.gold) => P.push({ path, s, d, color });
 add("a1", 6.6, 0.7); add("a2", 7.8, 0.6);
 add("a1", 8.7, 0.6, C.coral); add("a2", 9.6, 0.6, C.coral);
-for (const w of [11.8, 12.9]) { add("d1", w, 0.8); add("d2", w + 0.1, 0.9); add("d3", w + 0.2, 0.9); }
+for (const w of [11.8, 12.9]) { add("d1", w, 0.9); add("d2", w + 0.1, 0.7); add("d3", w + 0.2, 0.9); }
 for (const w of [15.8, 17.3]) {
   ["i1", "i2", "i3", "i4"].forEach((p, k) => add(p, w + k * 0.06, 0.9));
   add("m1", w + 1.0, 0.5); add("m2", w + 1.55, 0.5);
@@ -385,6 +412,7 @@ const bump = (t, times, len = 0.35) =>
   times.reduce((m, a) => (t >= a && t <= a + len ? Math.max(m, Math.sin(((t - a) / len) * Math.PI)) : m), 0);
 const countEased = (t, times, len = 0.4) => times.reduce((n, a) => n + easeOut(prog(t, a, len)), 0);
 const lastBefore = (t, times) => { let r = -1; for (const a of times) if (a <= t) r = a; return r; };
+const activeOn = (t, path) => P.some((p) => p.path === path && t >= p.s && t <= p.s + p.d);
 
 // ---------- caption builder (word-by-word kinetic type) ----------
 let capCache = {};
@@ -436,9 +464,10 @@ function render(t) {
     orbs[k].setAttribute("cy", (y + 90 * Math.cos(t * w * 1.3 + ph)).toFixed(1));
   });
 
-  // intro: owl pops, blinks, then an iris wipe opens the scene
-  popIn(owlIntro, 540, 540, t, 0.05, 0.6);
-  T(introEyes, scaleAt(540, 520, 1, 1 - 0.92 * bump(t, [1.2], 0.22)));
+  // intro: owl pops, blinks, looks around, then an iris wipe opens the scene
+  popIn(introOwlWrap, 540, 520, t, 0.05, 0.6);
+  introOwl.blink(bump(t, [1.2], 0.22));
+  introOwl.look(t < 1.5 ? 0 : 6 * Math.sin((t - 1.5) * 5), 0);
   riseIn(introTitle, t, 0.35, 0.6); riseIn(introSub, t, 0.55, 0.6);
   O(intro, 1 - prog(t, 2.6, 0.3));
   const irisR = 1100 * easeInOut(prog(t, 2.1, 0.85));
@@ -476,73 +505,78 @@ function render(t) {
     r.setAttribute("fill", step >= i + 1 ? C.gold : "#2A3655");
   });
 
-  // ---- row 1
-  popIn(nCheckout, 190, 380, t, 2.7, 0.55);
-  // streaming log: a new order line every LOG_EVERY seconds, older lines scroll up
+  // ---- panels
+  const fullIn = easeInOut(prog(t, 14.6, 0.6));
+  O(dbxColumn, prog(t, 2.6, 0.5) * (1 - fullIn));
+  O(dbxFull, fullIn);
+  riseIn(dbxTitle, t, 2.8, 0.5, 20);
+  O(medLabel, prog(t, 15.0, 0.5));
+  riseIn(bSupa, t, 10.6, 0.6, 50);
+
+  // ---- order generator
+  popIn(nGen, 190, 420, t, 2.8, 0.55);
   const nLines = t < LOG_START ? 0 : Math.floor((t - LOG_START) / LOG_EVERY) + 1;
   const newest = LOG_START + (nLines - 1) * LOG_EVERY;
   const slide = nLines ? 1 - easeOut(prog(t, newest, 0.22)) : 0;
   logPool.forEach((slot, j) => {
-    const i = nLines - 1 - j;              // j = 0 is the newest line
+    const i = nLines - 1 - j;
     if (i < 0) { O(slot.g, 0); return; }
-    const y = 420 - 19 * j + 19 * slide;
     O(slot.g, j === 0 ? 1 - slide * 0.6 : 1);
-    T(slot.g, `translate(0,${y.toFixed(1)})`);
-    const born = LOG_START + i * LOG_EVERY;
-    slot.bar.setAttribute("width", (LOG_W[i % 7] * easeOut(prog(t, born, 0.3))).toFixed(1));
+    T(slot.g, `translate(0,${(458 - 15 * j + 15 * slide).toFixed(1)})`);
+    slot.bar.setAttribute("width", (LOG_W[i % 7] * easeOut(prog(t, LOG_START + i * LOG_EVERY, 0.3))).toFixed(1));
     slot.bar.setAttribute("fill", LOG_COLORS[i % 7]);
   });
-  popIn(pricePill, 190, 296, t, 3.1, 0.45);
-  // running count of orders the generator has streamed so far
-  priceText.textContent = `${Math.floor(Math.max(0, t - LOG_START) * 46.3).toLocaleString("en-US")} orders`;
+  T(gear, `translate(252,470) rotate(${(t * 120).toFixed(1)})`);
+  popIn(countPill, 190, 296, t, 3.1, 0.45);
+  countText.textContent = `${Math.floor(Math.max(0, t - LOG_START) * 46.3).toLocaleString("en-US")} orders`;
 
-  popIn(nOwl, 540, 375, t, 5.7, 0.6, 0.07 * bump(t, ARR.owl));
+  // ---- Model 1
+  popIn(nOwl, 575, 380, t, 5.7, 0.6, 0.07 * bump(t, ARR.owl));
   const blink = bump(t, [4.0, 12.4, 16.9, 21.2, 25.6], 0.2);
   owl.blink(blink); miniOwl.blink(blink);
-  const look = P.some((p) => p.path === "a1" && t >= p.s && t <= p.s + p.d) ? -6
-             : P.some((p) => p.path === "a2" && t >= p.s && t <= p.s + p.d) ? 6
-             : P.some((p) => p.path === "loop" && t >= p.s && t <= p.s + p.d) ? 0 : 0;
-  const lookUp = P.some((p) => p.path === "loop" && t >= p.s && t <= p.s + p.d) ? -6 : 0;
-  owl.look(look, lookUp);
-  let pr = 70, po = 0;
-  for (const a of ARR.owl) { const x = prog(t, a, 0.6); if (t >= a && x < 1) { pr = 70 + 75 * easeOut(x); po = 0.7 * (1 - x); } }
+  const look = activeOn(t, "a1") ? -7 : activeOn(t, "a2") ? 7 : 0;
+  owl.look(look, activeOn(t, "loop") ? -7 : 0);
+  let pr = 72, po = 0;
+  for (const a of ARR.owl) { const x = prog(t, a, 0.6); if (t >= a && x < 1) { pr = 72 + 75 * easeOut(x); po = 0.7 * (1 - x); } }
   pulse.setAttribute("r", pr.toFixed(1)); O(pulse, po);
 
-  popIn(nResponse, 890, 380, t, 6.0, 0.55);
+  // ---- response
+  popIn(nResp, 890, 385, t, 6.0, 0.55);
   wire("a1", t, 6.0); wire("a2", t, 6.2);
   const STATES = [[8.4, "APPROVED · 87 ms", true], [10.2, "DECLINED · 92 ms", false]];
-  for (let k = 0; t >= 23 + k * 1.6 && k < 4; k++) STATES.push([23 + k * 1.6, ...[["APPROVED · 81 ms", true], ["APPROVED · 74 ms", true], ["DECLINED · 96 ms", false]][k % 3]]);
+  const OUTRO = [["APPROVED · 81 ms", true], ["APPROVED · 74 ms", true], ["DECLINED · 96 ms", false]];
+  for (let k = 0; t >= 23 + k * 1.6 && k < 4; k++) STATES.push([23 + k * 1.6, ...OUTRO[k % 3]]);
   let st = null;
-  for (const sItem of STATES) if (t >= sItem[0]) st = sItem;
+  for (const item of STATES) if (t >= item[0]) st = item;
   if (st) {
     const k = easeOut(prog(t, st[0], 0.3));
     const on = st[2] ? stampOK : stampNO, off = st[2] ? stampNO : stampOK;
     O(on, k); O(off, 0);
-    T(on, `translate(890,369) rotate(${((1 - k) * -30).toFixed(1)}) scale(${(1.6 - 0.6 * k).toFixed(3)}) translate(-890,-369)`);
+    T(on, `translate(890,389) rotate(${((1 - k) * -30).toFixed(1)}) scale(${(1.7 - 0.7 * k).toFixed(3)}) translate(-890,-389)`);
     latText.textContent = st[1];
     latRect.setAttribute("fill", st[2] ? C.teal : C.coral);
     popIn(latPill, 890, 296, t, STATES[0][0], 0.4);
   } else { O(stampOK, 0); O(stampNO, 0); O(latPill, 0); }
 
-  // ---- row 2
-  riseIn(bSupa, t, 10.6, 0.6, 50);
+  // ---- Supabase
   cyls.forEach((c, k) => {
-    popIn(c.g, c.cx, 610, t, 10.9 + k * 0.14, 0.5);
+    popIn(c.g, c.cx, 620, t, 10.9 + k * 0.14, 0.5);
     const level = k === 3 ? 0.35 : Math.min(0.85, 0.15 + 0.14 * countEased(t, ARR[`c${k}`]));
-    const h = level * 72;
-    c.liquid.setAttribute("y", (646 - h).toFixed(1));
-    c.liquid.setAttribute("height", h.toFixed(1));
+    const top = 658 - level * 74;
+    let d = "";
+    for (let x = c.cx - 42, n = 0; x <= c.cx + 42; x += 6, n++) {
+      d += `${n ? "L" : "M"}${x},${(top + 2.6 * Math.sin(t * 4 + x * 0.13 + k)).toFixed(1)} `;
+    }
+    c.liquid.setAttribute("d", `${d}L${c.cx + 42},672 L${c.cx - 42},672 Z`);
   });
   wire("d1", t, 11.0); wire("d2", t, 11.1); wire("d3", t, 11.2);
 
-  // ---- row 3
-  riseIn(bDbx, t, 14.6, 0.6, 50);
+  // ---- medallion
   ["i1", "i2", "i3", "i4"].forEach((p, k) => wire(p, t, 15.0 + k * 0.08));
   wire("m1", t, 15.3, 0.4); wire("m2", t, 15.5, 0.4);
   coins.forEach((c, k) => {
     const times = ARR[["bronze", "silver", "gold"][k]];
     popIn(c.g, c.cx, 875, t, 14.9 + k * 0.2, 0.55);
-    // coin flip on arrival (story beats only), bump during the outro
     const a = lastBefore(t, times.filter((x) => x < 23));
     const f = a > 0 ? prog(t, a, 0.45) : 1;
     const sx = f < 1 ? Math.max(0.06, Math.abs(Math.cos(f * Math.PI))) : 1;
@@ -554,21 +588,22 @@ function render(t) {
     O(c.label, prog(t, 15.0 + k * 0.2, 0.4));
   });
 
-  // ---- row 4
+  // ---- outputs
   [k1, k2, k3].forEach((k, i) => {
     riseIn(k.g, t, 19.2 + i * 0.15, 0.6, 50);
     popIn(k.icon, [130, 445, 760][i], 1130, t, 19.5 + i * 0.15, 0.5);
     k.r.setAttribute("stroke-width", (2 + 3 * bump(t, ARR[`k${i + 1}`])).toFixed(2));
   });
   wire("g1", t, 19.5, 0.7); wire("g2", t, 19.5, 0.6); wire("g3", t, 19.5, 0.45);
-  const alerts = ARR.k2.filter((a) => a <= t).length;
-  badgeText.textContent = String(alerts);
-  popIn(badge, 470, 1102, t, ARR.k2[0] ?? 99, 0.35, 0.3 * bump(t, ARR.k2, 0.3));
+  badgeText.textContent = String(ARR.k2.filter((a) => a <= t).length);
+  popIn(badge, 471, 1100, t, ARR.k2[0] ?? 99, 0.35, 0.3 * bump(t, ARR.k2, 0.3));
   const grow = Math.min(1, countEased(t, ARR.k3, 0.6) / 2);
   bars.forEach((b, k) => {
     const h = BAR_MAX[k] * grow * (1 + 0.12 * Math.sin(t * 3 + k * 1.7) * grow);
-    b.setAttribute("y", (1146 - h).toFixed(1)); b.setAttribute("height", h.toFixed(1));
+    b.setAttribute("y", (1152 - h).toFixed(1)); b.setAttribute("height", h.toFixed(1));
   });
+  const pts = [0, 1, 2, 3, 4].map((k) => `${734 + k * 13},${(1124 - grow * (4 + 6 * Math.sin(k * 1.3 + t * 1.5))).toFixed(1)}`);
+  spark.setAttribute("points", pts.join(" ")); O(spark, grow);
   miniOwl.look(6 * Math.sin(t * 1.4), 0);
   wire("loop", t, 21.0, 1.0);
   O(loopLabel, prog(t, 21.5, 0.5));
