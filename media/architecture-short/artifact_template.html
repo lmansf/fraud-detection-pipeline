@@ -1,0 +1,85 @@
+<title>Owl Park Pipeline Short</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap">
+<style>
+  /* Layout: one centered column; the animation is the page, controls sit directly under it. */
+  :root {
+    --bg: #070B16;
+    --panel: #0F1628;
+    --line: #22304D;
+    --fg: #F1F5F9;
+    --muted: #94A3B8;
+    --accent: #F5B942;
+    --font: Inter, "Helvetica Neue", Arial, sans-serif;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font); }
+  main { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 40px; display: grid; gap: 16px; }
+  header { display: grid; gap: 4px; }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+  h1 { margin: 0; font-size: clamp(22px, 5vw, 28px); font-weight: 800; text-wrap: balance; }
+  .frame { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); }
+  #stage { display: block; width: 100%; height: auto; aspect-ratio: 1080 / 1350; font-family: var(--font); }
+  .controls { display: flex; align-items: center; gap: 12px; }
+  .controls button {
+    font: 600 14px var(--font); color: var(--bg); background: var(--accent);
+    border: 0; border-radius: 999px; padding: 9px 18px; cursor: pointer; min-width: 84px;
+  }
+  .controls button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  .controls button:focus-visible, #ctlScrub:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  #ctlScrub { flex: 1; min-width: 0; accent-color: var(--accent); }
+  #ctlClock { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .note { margin: 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
+  .note code { color: var(--fg); font-size: 12px; }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">LinkedIn short · 1080 × 1350 · 28 s</span>
+    <h1>How the Owl Park fraud pipeline works</h1>
+  </header>
+  <div class="frame">
+<!--SVG-->
+  </div>
+  <div class="controls">
+    <button id="ctlPlay" type="button">Pause</button>
+    <button id="ctlReplay" class="ghost" type="button">Replay</button>
+    <input id="ctlScrub" type="range" min="0" max="28" step="0.01" value="0" aria-label="Scrub timeline">
+    <span id="ctlClock">0:00 / 0:28</span>
+  </div>
+  <p class="note">The exported video is <code>media/architecture-short/owl-park-pipeline.mp4</code> in the repo, with <code>poster.png</code> for the thumbnail. Rebuild both with <code>node render.js</code>.</p>
+</main>
+
+<script><!--SPLIT-->
+// ---------- player controls ----------
+let now = 0, playing = false, last = null;
+const btn = $("ctlPlay"), scrub = $("ctlScrub"), clock = $("ctlClock");
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+function setT(v) {
+  now = clamp(v, 0, DURATION);
+  render(now);
+  scrub.value = now;
+  clock.textContent = `${fmt(now)} / ${fmt(DURATION)}`;
+}
+function tick(ts) {
+  if (!playing) return;
+  if (last !== null) now += (ts - last) / 1000;
+  last = ts;
+  if (now >= DURATION) { setT(DURATION); pause(); return; }
+  setT(now);
+  requestAnimationFrame(tick);
+}
+function play() { if (now >= DURATION - 0.05) now = 0; playing = true; last = null; btn.textContent = "Pause"; requestAnimationFrame(tick); }
+function pause() { playing = false; btn.textContent = "Play"; }
+btn.addEventListener("click", () => (playing ? pause() : play()));
+$("ctlReplay").addEventListener("click", () => { now = 0; play(); });
+scrub.addEventListener("input", () => { pause(); setT(Number(scrub.value)); });
+
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+document.fonts.ready.then(() => {
+  if (reduce) { setT(DURATION - 0.6); pause(); }
+  else { setT(0); play(); }
+});
+setT(DURATION - 0.6);  // complete diagram until fonts are ready
+</script>
