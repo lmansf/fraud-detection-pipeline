@@ -302,9 +302,9 @@ const coins = COINS.map(([cx, fill, edge, name, sub], k) => {
   el("circle", { cx, cy: 875, r: 45, fill: "none", stroke: edge, "stroke-opacity": 0.5, "stroke-width": 3 }, face);
   el("circle", { cx, cy: 875, r: 42, fill: "none", stroke: "#fff", "stroke-opacity": 0.35, "stroke-width": 1.5 }, face);
   el("text", { x: cx, y: 884, "text-anchor": "middle", "font-size": 24, "font-weight": 800, fill: C.ink }, face, name);
-  const shine = el("rect", { x: cx - 14, y: 790, width: 28, height: 170, fill: "#fff", opacity: 0.45, "clip-path": `url(#coinClip${k})` }, g);
+  const ripple = el("circle", { cx, cy: 875, r: 55, fill: "none", stroke: ["#EDB27A", "#F7F9FC", "#FFE69A"][k], "stroke-width": 3, opacity: 0 }, g);
   const label = el("text", { x: cx, y: 966, "text-anchor": "middle", "font-size": 19, fill: C.muted }, world, sub);
-  return { g, face, shine, label, cx };
+  return { g, face, ripple, label, cx };
 });
 
 // ---------- outputs ----------
@@ -577,14 +577,12 @@ function render(t) {
   coins.forEach((c, k) => {
     const times = ARR[["bronze", "silver", "gold"][k]];
     popIn(c.g, c.cx, 875, t, 14.9 + k * 0.2, 0.55);
-    const a = lastBefore(t, times.filter((x) => x < 23));
-    const f = a > 0 ? prog(t, a, 0.45) : 1;
-    const sx = f < 1 ? Math.max(0.06, Math.abs(Math.cos(f * Math.PI))) : 1;
-    const b = 1 + 0.1 * bump(t, times.filter((x) => x >= 23));
-    T(c.face, scaleAt(c.cx, 875, sx * b, b));
-    const sh = a > 0 ? prog(t, a + 0.2, 0.5) : 0;
-    O(c.shine, sh > 0 && sh < 1 ? 0.45 : 0);
-    T(c.shine, `translate(${lerp(-80, 80, sh).toFixed(1)},0) rotate(25 ${c.cx} 875)`);
+    // a batch landing in this layer: the coin bumps and sends out a ripple
+    T(c.face, scaleAt(c.cx, 875, 1 + 0.1 * bump(t, times)));
+    const a = lastBefore(t, times);
+    const rx = a > 0 ? prog(t, a, 0.6) : 1;
+    c.ripple.setAttribute("r", (55 + 30 * easeOut(rx)).toFixed(1));
+    O(c.ripple, rx < 1 ? 0.8 * (1 - rx) : 0);
     O(c.label, prog(t, 15.0 + k * 0.2, 0.4));
   });
 
