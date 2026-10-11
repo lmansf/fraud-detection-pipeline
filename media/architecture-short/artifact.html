@@ -205,7 +205,8 @@ const WIRES = {
   m1: ["M308,875 H477", "#5A6B92", "arrow"],
   m2: ["M598,875 H767", "#5A6B92", "arrow"],
   g1: ["M888,875 H960 V1025 H225 V1060", "#6B5A2A"],
-  g2: ["M888,875 H960 V1025 H540 V1060", "#6B5A2A"],
+  g2: ["M888,875 H960 V1025 H535 V1060", "#6B5A2A"],
+  h1: ["M352,1130 H396", "#8B7BD8", "arrow"],
   g3: ["M888,875 H960 V1060", "#6B5A2A"],
   loop: ["M80,1130 H45 V266 H575 V296", C.gold, "arrowGold"],
 };
@@ -308,24 +309,25 @@ const coins = COINS.map(([cx, fill, edge, name, sub], k) => {
 });
 
 // ---------- outputs ----------
-function card(x, stroke, fill, eyebrow, title, line) {
+function card(x, w, stroke, fill, eyebrow, title, line) {
   const g = el("g", {}, world);
-  const r = el("rect", { x, y: 1060, width: 290, height: 140, rx: 24, fill, stroke, "stroke-width": 2, filter: "url(#shadow)" }, g);
+  const r = el("rect", { x, y: 1060, width: w, height: 140, rx: 24, fill, stroke, "stroke-width": 2, filter: "url(#shadow)" }, g);
   el("text", { x: x + 100, y: 1106, "font-size": eyebrow.length > 10 ? 13 : 14, "font-weight": 800, "letter-spacing": eyebrow.length > 10 ? 2 : 3, fill: stroke }, g, eyebrow);
   el("text", { x: x + 100, y: 1138, "font-size": 27, "font-weight": 800, fill: C.fg }, g, title);
   el("text", { x: x + 100, y: 1166, "font-size": 17, fill: C.muted }, g, line);
   const icon = el("g", {}, g);
   return { g, r, icon };
 }
-const k1 = card(80, C.gold, "#16203A", "MODEL 1", "Real-time", "decides in < 100 ms");
+const k1 = card(80, 270, C.gold, "#16203A", "MODEL 1", "Real-time", "live, < 100 ms");
 const miniOwl = drawOwl(k1.icon, 130, 1128, 0.42, 5);
-const k2 = card(395, C.violet, "#1B1836", "MODEL 2", "Safety net", "alerts the team");
-el("path", { d: "M445,1098 L473,1108 V1130 C473,1150 460,1161 445,1168 C430,1161 417,1150 417,1130 V1108 Z", fill: "url(#shield)", stroke: "#C4B5FD", "stroke-width": 2 }, k2.icon);
-el("path", { d: "M434,1132 L442,1140 L457,1123", fill: "none", stroke: "#fff", "stroke-width": 3.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, k2.icon);
+const k2 = card(400, 270, C.violet, "#1B1836", "MODEL 2", "Safety net", "checks approvals");
+el("path", { d: "M450,1098 L478,1108 V1130 C478,1150 465,1161 450,1168 C435,1161 422,1150 422,1130 V1108 Z", fill: "url(#shield)", stroke: "#C4B5FD", "stroke-width": 2 }, k2.icon);
+el("path", { d: "M439,1132 L447,1140 L462,1123", fill: "none", stroke: "#fff", "stroke-width": 3.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, k2.icon);
 const badge = el("g", {}, k2.icon);
-el("circle", { cx: 471, cy: 1100, r: 12, fill: C.coral, stroke: "#1B1836", "stroke-width": 2.5 }, badge);
-const badgeText = el("text", { x: 471, y: 1105, "text-anchor": "middle", "font-size": 13, "font-weight": 800, fill: "#fff" }, badge, "0");
-const k3 = card(710, C.sky, "#0F1F2C", "SELF-SERVICE BI", "Dashboards", "built with Claude");
+el("circle", { cx: 476, cy: 1100, r: 12, fill: C.coral, stroke: "#1B1836", "stroke-width": 2.5 }, badge);
+const badgeText = el("text", { x: 476, y: 1105, "text-anchor": "middle", "font-size": 13, "font-weight": 800, fill: "#fff" }, badge, "0");
+const handoffLabel = el("text", { x: 374, y: 1112, "text-anchor": "middle", "font-size": 12, "font-weight": 700, fill: "#C4B5FD" }, world, "passed");
+const k3 = card(710, 290, C.sky, "#0F1F2C", "SELF-SERVICE BI", "Dashboards", "built with Claude");
 el("rect", { x: 728, y: 1100, width: 64, height: 58, rx: 8, fill: "#0B2233", stroke: C.sky, "stroke-width": 2 }, k3.icon);
 el("rect", { x: 728, y: 1100, width: 64, height: 11, rx: 8, fill: "#123A55" }, k3.icon);
 const BAR_MAX = [16, 26, 12, 32];
@@ -360,7 +362,7 @@ const CAPTIONS = [
   { s: 5.5, e: 10.5, title: "Model 1 scores each one live", sub: "Approve or decline before the order completes", step: 2 },
   { s: 10.5, e: 14.5, title: "Every event lands in Supabase", sub: "Orders, decisions and responses as raw tables", step: 3 },
   { s: 14.5, e: 19, title: "Databricks refines the data", sub: "Bronze → Silver → Gold", step: 4 },
-  { s: 19, e: 23, title: "Gold powers every output", sub: "Two models plus self-service dashboards", step: 5 },
+  { s: 19, e: 23, title: "Gold powers every output", sub: "Model 2 re-checks what Model 1 let through", step: 5 },
   { s: 23, e: DURATION + 1, title: "Fraud stopped in milliseconds", sub: "with a batch safety net for anything missed", step: 6 },
 ];
 
@@ -388,10 +390,10 @@ for (const w of [15.8, 17.3]) {
   ["i1", "i2", "i3", "i4"].forEach((p, k) => add(p, w + k * 0.06, 0.9));
   add("m1", w + 1.0, 0.5); add("m2", w + 1.55, 0.5);
 }
-for (const w of [20.1, 21.0]) { add("g1", w, 0.8); add("g2", w, 0.7); add("g3", w, 0.55); }
+for (const w of [20.1, 21.0]) { add("g1", w, 0.8); add("g2", w, 0.7); add("g3", w, 0.55); add("h1", w + 0.8, 0.45); }
 add("loop", 21.9, 1.1);
 const STAGES = [["a1", 0], ["a2", 0.7], ["d1", 1.0], ["d2", 1.1], ["d3", 1.2], ["i1", 2.0], ["i2", 2.05], ["i3", 2.1],
-                ["i4", 2.15], ["m1", 3.0], ["m2", 3.5], ["g1", 4.0], ["g2", 4.0], ["g3", 4.0]];
+                ["i4", 2.15], ["m1", 3.0], ["m2", 3.5], ["g1", 4.0], ["g2", 4.0], ["g3", 4.0], ["h1", 4.8]];
 for (let k = 0; k < 8; k++) {
   const base = 23.4 + k * 0.85 - 4.5;
   for (const [path, off] of STAGES) {
@@ -406,7 +408,7 @@ const arrivals = (paths) => P.filter((p) => paths.includes(p.path)).map((p) => p
 const ARR = {
   owl: arrivals(["a1", "loop"]), c0: arrivals(["d1"]), c1: arrivals(["d2"]), c2: arrivals(["d3"]),
   bronze: arrivals(["i1", "i2", "i3", "i4"]), silver: arrivals(["m1"]), gold: arrivals(["m2"]),
-  k1: arrivals(["g1"]), k2: arrivals(["g2"]), k3: arrivals(["g3"]),
+  k1: arrivals(["g1"]), k2: arrivals(["g2"]), k2in: arrivals(["g2", "h1"]), k3: arrivals(["g3"]),
 };
 const bump = (t, times, len = 0.35) =>
   times.reduce((m, a) => (t >= a && t <= a + len ? Math.max(m, Math.sin(((t - a) / len) * Math.PI)) : m), 0);
@@ -589,12 +591,13 @@ function render(t) {
   // ---- outputs
   [k1, k2, k3].forEach((k, i) => {
     riseIn(k.g, t, 19.2 + i * 0.15, 0.6, 50);
-    popIn(k.icon, [130, 445, 760][i], 1130, t, 19.5 + i * 0.15, 0.5);
-    k.r.setAttribute("stroke-width", (2 + 3 * bump(t, ARR[`k${i + 1}`])).toFixed(2));
+    popIn(k.icon, [130, 450, 760][i], 1130, t, 19.5 + i * 0.15, 0.5);
+    k.r.setAttribute("stroke-width", (2 + 3 * bump(t, ARR[i === 1 ? "k2in" : `k${i + 1}`])).toFixed(2));
   });
-  wire("g1", t, 19.5, 0.7); wire("g2", t, 19.5, 0.6); wire("g3", t, 19.5, 0.45);
+  wire("g1", t, 19.5, 0.7); wire("g2", t, 19.5, 0.6); wire("g3", t, 19.5, 0.45); wire("h1", t, 20.0, 0.35);
+  O(handoffLabel, prog(t, 20.1, 0.4));
   badgeText.textContent = String(ARR.k2.filter((a) => a <= t).length);
-  popIn(badge, 471, 1100, t, ARR.k2[0] ?? 99, 0.35, 0.3 * bump(t, ARR.k2, 0.3));
+  popIn(badge, 476, 1100, t, ARR.k2[0] ?? 99, 0.35, 0.3 * bump(t, ARR.k2, 0.3));
   const grow = Math.min(1, countEased(t, ARR.k3, 0.6) / 2);
   bars.forEach((b, k) => {
     const h = BAR_MAX[k] * grow * (1 + 0.12 * Math.sin(t * 3 + k * 1.7) * grow);
