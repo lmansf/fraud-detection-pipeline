@@ -1,0 +1,454 @@
+<title>Owl Park Pipeline Short</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap">
+<style>
+  /* Layout: one centered column; the animation is the page, controls sit directly under it. */
+  :root {
+    --bg: #070B16;
+    --panel: #0F1628;
+    --line: #22304D;
+    --fg: #F1F5F9;
+    --muted: #94A3B8;
+    --accent: #F5B942;
+    --font: Inter, "Helvetica Neue", Arial, sans-serif;
+    color-scheme: dark;
+  }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font); }
+  main { max-width: 560px; margin: 0 auto; padding-inline: 16px; padding-block: 28px 40px; display: grid; gap: 16px; }
+  header { display: grid; gap: 4px; }
+  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+  h1 { margin: 0; font-size: clamp(22px, 5vw, 28px); font-weight: 800; text-wrap: balance; }
+  .frame { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--bg); }
+  #stage { display: block; width: 100%; height: auto; aspect-ratio: 1080 / 1350; font-family: var(--font); }
+  .controls { display: flex; align-items: center; gap: 12px; }
+  .controls button {
+    font: 600 14px var(--font); color: var(--bg); background: var(--accent);
+    border: 0; border-radius: 999px; padding: 9px 18px; cursor: pointer; min-width: 84px;
+  }
+  .controls button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  .controls button:focus-visible, #ctlScrub:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  #ctlScrub { flex: 1; min-width: 0; accent-color: var(--accent); }
+  #ctlClock { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .note { margin: 0; font-size: 13px; line-height: 1.55; color: var(--muted); }
+  .note code { color: var(--fg); font-size: 12px; }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">LinkedIn short · 1080 × 1350 · 28 s</span>
+    <h1>How the Owl Park fraud pipeline works</h1>
+  </header>
+  <div class="frame">
+<svg id="stage" role="img" aria-label="Animated diagram: Owl Park checkout feeds a real-time fraud model, events land in Supabase raw tables, Databricks refines them through bronze, silver and gold layers, and two models learn from gold features." viewBox="0 0 1080 1350" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="dotgrid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#1A2540"/>
+    </pattern>
+    <radialGradient id="vignette" cx="50%" cy="45%" r="75%">
+      <stop offset="0%" stop-color="#0A1020" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#05080F" stop-opacity="0.85"/>
+    </radialGradient>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="7"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#4B5B80"/>
+    </marker>
+    <marker id="arrowGold" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#F5B942"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1080" height="1350" fill="#0A1020"/>
+  <rect width="1080" height="1350" fill="url(#dotgrid)"/>
+  <rect width="1080" height="1350" fill="url(#vignette)"/>
+
+  <!-- Intro -->
+  <g id="intro">
+    <g id="owl">
+      <g id="eyes">
+        <circle cx="468" cy="520" r="54" fill="#F5B942"/>
+        <circle cx="612" cy="520" r="54" fill="#F5B942"/>
+        <circle cx="468" cy="520" r="25" fill="#0A1020"/>
+        <circle cx="612" cy="520" r="25" fill="#0A1020"/>
+        <circle cx="460" cy="511" r="7" fill="#F1F5F9"/>
+        <circle cx="604" cy="511" r="7" fill="#F1F5F9"/>
+      </g>
+      <path d="M526,588 L554,588 L540,612 z" fill="#CD8A4E"/>
+    </g>
+    <text x="540" y="712" text-anchor="middle" font-size="66" font-weight="800" fill="#F1F5F9">Catching fraud at Owl Park</text>
+    <text x="540" y="772" text-anchor="middle" font-size="32" fill="#94A3B8">How the data pipeline works, in under 30 seconds</text>
+  </g>
+
+  <!-- Header -->
+  <g id="header">
+    <text x="540" y="96" text-anchor="middle" font-size="22" font-weight="700" letter-spacing="5" fill="#F5B942">OWL PARK · FRAUD DETECTION PIPELINE</text>
+    <text id="cap" x="540" y="166" text-anchor="middle" font-size="50" font-weight="800" fill="#F1F5F9"></text>
+    <text id="capsub" x="540" y="212" text-anchor="middle" font-size="28" fill="#94A3B8"></text>
+    <g id="dots"></g>
+  </g>
+
+  <!-- Static connector lines (drawn progressively) -->
+  <g fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path id="a1" class="wire" d="M300,380 H420" stroke="#4B5B80" marker-end="url(#arrow)"/>
+    <path id="a2" class="wire" d="M650,380 H770" stroke="#4B5B80" marker-end="url(#arrow)"/>
+    <path id="d1" class="wire" d="M190,440 V575" stroke="#2C6B52"/>
+    <path id="d2" class="wire" d="M540,440 V478 H420 V575" stroke="#2C6B52"/>
+    <path id="d3" class="wire" d="M890,440 V478 H650 V575" stroke="#2C6B52"/>
+    <path id="i1" class="wire" d="M190,645 V725 H250 V820" stroke="#7A4A33"/>
+    <path id="i2" class="wire" d="M420,645 V725 H250 V820" stroke="#7A4A33"/>
+    <path id="i3" class="wire" d="M650,645 V725 H250 V820" stroke="#7A4A33"/>
+    <path id="i4" class="wire" d="M880,645 V725 H250 V820" stroke="#7A4A33"/>
+    <path id="m1" class="wire" d="M305,875 H477" stroke="#4B5B80" marker-end="url(#arrow)"/>
+    <path id="m2" class="wire" d="M595,875 H767" stroke="#4B5B80" marker-end="url(#arrow)"/>
+    <path id="g1" class="wire" d="M885,875 H960 V1025 H300 V1060" stroke="#6B5A2A"/>
+    <path id="g2" class="wire" d="M885,875 H960 V1060" stroke="#6B5A2A"/>
+    <path id="loop" class="wire" d="M80,1130 H45 V290 H540 V312" stroke="#F5B942" stroke-dasharray="0" marker-end="url(#arrowGold)"/>
+  </g>
+  <text id="loopLabel" x="64" y="280" font-size="19" font-weight="600" font-style="italic" fill="#F5B942">retrain &amp; deploy</text>
+
+  <!-- Row 1: checkout, model 1, response -->
+  <circle id="pulse" cx="540" cy="380" r="70" fill="none" stroke="#F5B942" stroke-width="3" opacity="0"/>
+  <g id="nCheckout">
+    <rect x="80" y="320" width="220" height="120" rx="20" fill="#111A2E" stroke="#3B4A6B" stroke-width="2"/>
+    <text x="190" y="372" text-anchor="middle" font-size="30" font-weight="700" fill="#F1F5F9">Checkout</text>
+    <text id="cartText" x="190" y="408" text-anchor="middle" font-size="20" fill="#94A3B8"></text>
+  </g>
+  <g id="nModel">
+    <rect x="430" y="320" width="220" height="120" rx="20" fill="#16203A" stroke="#F5B942" stroke-width="2.5"/>
+    <text x="540" y="372" text-anchor="middle" font-size="30" font-weight="800" fill="#F5B942">Model 1</text>
+    <text x="540" y="408" text-anchor="middle" font-size="20" fill="#94A3B8">real-time score</text>
+  </g>
+  <g id="nResponse">
+    <rect x="780" y="320" width="220" height="120" rx="20" fill="#111A2E" stroke="#3B4A6B" stroke-width="2"/>
+    <text x="890" y="366" text-anchor="middle" font-size="30" font-weight="700" fill="#F1F5F9">Response</text>
+    <rect id="pill" x="800" y="386" width="180" height="36" rx="18" fill="#1E293B"/>
+    <text id="pillText" x="890" y="410" text-anchor="middle" font-size="17" font-weight="700" letter-spacing="0.5" fill="#94A3B8">waiting…</text>
+  </g>
+
+  <!-- Row 2: Supabase -->
+  <g id="bSupa">
+    <rect x="80" y="510" width="920" height="180" rx="22" fill="#0E1A1F" stroke="#3ECF8E" stroke-opacity="0.55" stroke-width="2"/>
+    <text x="980" y="546" text-anchor="end" font-size="20" font-weight="800" letter-spacing="4" fill="#3ECF8E">SUPABASE<tspan font-weight="400" letter-spacing="1" fill="#94A3B8">  ·  raw tables</tspan></text>
+  </g>
+  <g id="c1"><rect x="90" y="575" width="200" height="70" rx="14" fill="#0B1418" stroke="#3ECF8E" stroke-width="1.5"/><text x="190" y="618" text-anchor="middle" font-size="22" font-weight="600" fill="#E2E8F0">transactions</text></g>
+  <g id="c2"><rect x="320" y="575" width="200" height="70" rx="14" fill="#0B1418" stroke="#3ECF8E" stroke-width="1.5"/><text x="420" y="618" text-anchor="middle" font-size="22" font-weight="600" fill="#E2E8F0">decisions</text></g>
+  <g id="c3"><rect x="550" y="575" width="200" height="70" rx="14" fill="#0B1418" stroke="#3ECF8E" stroke-width="1.5"/><text x="650" y="618" text-anchor="middle" font-size="22" font-weight="600" fill="#E2E8F0">responses</text></g>
+  <g id="c4"><rect x="780" y="575" width="200" height="70" rx="14" fill="#0B1418" stroke="#3ECF8E" stroke-width="1.5" stroke-dasharray="6 6"/><text x="880" y="618" text-anchor="middle" font-size="22" font-weight="600" fill="#E2E8F0">fraud truth</text></g>
+
+  <!-- Row 3: Databricks -->
+  <g id="bDbx">
+    <rect x="80" y="760" width="920" height="230" rx="22" fill="#1A1210" stroke="#FF6A3D" stroke-opacity="0.55" stroke-width="2"/>
+    <text x="980" y="796" text-anchor="end" font-size="20" font-weight="800" letter-spacing="4" fill="#FF6A3D">DATABRICKS<tspan font-weight="400" letter-spacing="1" fill="#94A3B8">  ·  medallion</tspan></text>
+  </g>
+  <g id="mBronze">
+    <circle cx="250" cy="875" r="55" fill="#CD8A4E"/>
+    <text x="250" y="884" text-anchor="middle" font-size="25" font-weight="800" fill="#1A1210">Bronze</text>
+  </g>
+  <g id="mSilver">
+    <circle cx="540" cy="875" r="55" fill="#C9D1DC"/>
+    <text x="540" y="884" text-anchor="middle" font-size="25" font-weight="800" fill="#1A1210">Silver</text>
+  </g>
+  <g id="mGold">
+    <circle cx="830" cy="875" r="55" fill="#F5C542"/>
+    <text x="830" y="884" text-anchor="middle" font-size="25" font-weight="800" fill="#1A1210">Gold</text>
+  </g>
+
+  <text id="sBronze" x="250" y="962" text-anchor="middle" font-size="20" fill="#94A3B8">raw copy</text>
+  <text id="sSilver" x="540" y="962" text-anchor="middle" font-size="20" fill="#94A3B8">clean &amp; joined</text>
+  <text id="sGold" x="830" y="962" text-anchor="middle" font-size="20" fill="#94A3B8">ML features</text>
+
+  <!-- Row 4: models -->
+  <g id="k1">
+    <rect id="k1r" x="80" y="1060" width="440" height="140" rx="22" fill="#16203A" stroke="#F5B942" stroke-width="2"/>
+    <text x="110" y="1110" font-size="30" font-weight="800" fill="#F5B942">Model 1 · Real-time</text>
+    <text x="110" y="1146" font-size="21" fill="#CBD5E1">scores every purchase</text>
+    <text x="110" y="1176" font-size="21" fill="#94A3B8">decision in &lt; 100 ms</text>
+  </g>
+  <g id="k2">
+    <rect id="k2r" x="560" y="1060" width="440" height="140" rx="22" fill="#1B1836" stroke="#A78BFA" stroke-width="2"/>
+    <text x="590" y="1110" font-size="30" font-weight="800" fill="#A78BFA">Model 2 · Wider view</text>
+    <text x="590" y="1146" font-size="21" fill="#CBD5E1">finds fraud rings across</text>
+    <text x="590" y="1176" font-size="21" fill="#94A3B8">cards, devices &amp; accounts</text>
+  </g>
+
+  <!-- Footer -->
+  <text id="footer" x="540" y="1272" text-anchor="middle" font-size="23" fill="#94A3B8" letter-spacing="0.5">Synthetic data  ·  Supabase  ·  Databricks  ·  2 ML models</text>
+
+  <!-- Particles are injected here, above everything else -->
+  <g id="particles"></g>
+</svg>
+  </div>
+  <div class="controls">
+    <button id="ctlPlay" type="button">Pause</button>
+    <button id="ctlReplay" class="ghost" type="button">Replay</button>
+    <input id="ctlScrub" type="range" min="0" max="28" step="0.01" value="0" aria-label="Scrub timeline">
+    <span id="ctlClock">0:00 / 0:28</span>
+  </div>
+  <p class="note">The exported video is <code>media/architecture-short/owl-park-pipeline.mp4</code> in the repo, with <code>poster.png</code> for the thumbnail. Rebuild both with <code>node render.js</code>.</p>
+</main>
+
+<script>
+
+const DURATION = 28;
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+const easeInOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const prog = (t, start, dur) => clamp((t - start) / dur);
+
+const GOLD = "#F5B942", CORAL = "#F87171", TEAL = "#2DD4BF";
+
+// ---------- captions ----------
+const CAPTIONS = [
+  { s: 2.5, e: 5.5, title: "A guest checks out", sub: "Tickets, Hoot Passes, gift cards, all in one cart", step: 1 },
+  { s: 5.5, e: 10.5, title: "Model 1 scores it in real time", sub: "Approve or decline before checkout finishes", step: 2 },
+  { s: 10.5, e: 14.5, title: "Every event lands in Supabase", sub: "Purchases, decisions and responses as raw tables", step: 3 },
+  { s: 14.5, e: 19, title: "Databricks refines the data", sub: "Bronze  →  Silver  →  Gold", step: 4 },
+  { s: 19, e: 23, title: "Two models learn from Gold", sub: "Retrained and redeployed to checkout", step: 5 },
+  { s: 23, e: DURATION + 1, title: "Fraud stopped in milliseconds", sub: "and the rings behind it, found in batch", step: 6 },
+];
+
+// ---------- particle schedule ----------
+const P = [];
+const add = (path, s, d, color = GOLD) => P.push({ path, s, d, color });
+// Step 2: one good purchase, one fraudulent one
+add("a1", 6.5, 0.7); add("a2", 7.7, 0.6);
+add("a1", 8.6, 0.6, CORAL); add("a2", 9.5, 0.6, CORAL);
+// Step 3: events drop into raw tables
+for (const w of [11.8, 12.9]) { add("d1", w, 0.8); add("d2", w + 0.1, 0.9); add("d3", w + 0.2, 0.9); }
+// Step 4: ingest + medallion refinement
+for (const w of [15.8, 17.3]) {
+  ["i1", "i2", "i3", "i4"].forEach((p, k) => add(p, w + k * 0.06, 0.9));
+  add("m1", w + 1.0, 0.5); add("m2", w + 1.55, 0.5);
+}
+// Step 5: gold feeds both models, then the retrain loop
+for (const w of [20.0, 20.9]) { add("g1", w, 0.8); add("g2", w, 0.6); }
+add("loop", 21.9, 1.1);
+// Outro: continuous flow through the whole system
+const STAGES = [["a1", 0], ["a2", 0.7], ["d1", 1.0], ["d2", 1.1], ["d3", 1.2], ["i1", 2.0], ["i2", 2.05], ["i3", 2.1],
+                ["i4", 2.15], ["m1", 3.0], ["m2", 3.5], ["g1", 4.0], ["g2", 4.0]];
+for (let k = 0; k < 8; k++) {
+  const base = 23.2 + k * 0.85 - 4.5;   // start earlier so the whole chain is already flowing
+  for (const [path, off] of STAGES) {
+    const s = base + off;
+    if (s >= 23.2 && s < DURATION - 0.3) {
+      const fraud = (path === "a1" || path === "a2") && k % 3 === 2;
+      add(path, s, path.startsWith("a") || path.startsWith("m") ? 0.55 : 0.8, fraud ? CORAL : GOLD);
+    }
+  }
+}
+
+const arrivals = (paths) => P.filter((p) => paths.includes(p.path)).map((p) => p.s + p.d);
+const BUMP = {
+  model: arrivals(["a1", "loop"]),
+  bronze: arrivals(["i1", "i2", "i3", "i4"]),
+  silver: arrivals(["m1"]),
+  gold: arrivals(["m2"]),
+  k1: arrivals(["g1"]),
+  k2: arrivals(["g2"]),
+};
+const bump = (t, times, len = 0.35) =>
+  times.reduce((m, a) => (t >= a && t <= a + len ? Math.max(m, Math.sin(((t - a) / len) * Math.PI)) : m), 0);
+
+// ---------- setup ----------
+const pathLen = {};
+document.querySelectorAll(".wire").forEach((el) => {
+  const L = el.getTotalLength();
+  pathLen[el.id] = L;
+  el.style.strokeDasharray = `${L} ${L}`;
+});
+
+const NS = "http://www.w3.org/2000/svg";
+const pool = [];
+for (let i = 0; i < 70; i++) {
+  const g = document.createElementNS(NS, "g");
+  const halo = document.createElementNS(NS, "circle");
+  halo.setAttribute("r", "13"); halo.setAttribute("filter", "url(#glow)"); halo.setAttribute("opacity", "0.9");
+  const core = document.createElementNS(NS, "circle");
+  core.setAttribute("r", "6.5");
+  g.append(halo, core);
+  $("particles").appendChild(g);
+  pool.push({ g, halo, core });
+}
+
+const dots = [];
+for (let i = 0; i < 5; i++) {
+  const r = document.createElementNS(NS, "rect");
+  r.setAttribute("height", "10"); r.setAttribute("rx", "5"); r.setAttribute("y", "243");
+  $("dots").appendChild(r);
+  dots.push(r);
+}
+
+// ---------- helpers ----------
+function setOpacity(id, o) { $(id).setAttribute("opacity", o.toFixed(3)); }
+function rise(id, t, start, dur = 0.55, dy = 26) {
+  const k = easeOut(prog(t, start, dur));
+  $(id).setAttribute("opacity", k.toFixed(3));
+  $(id).setAttribute("transform", `translate(0,${((1 - k) * dy).toFixed(2)})`);
+}
+function pop(id, cx, cy, t, start, dur = 0.45, extra = 0) {
+  const x = prog(t, start, dur);
+  const back = x === 0 ? 0 : 1 + 0.18 * Math.sin(x * Math.PI) * (1 - x) * 2.2;  // overshoot
+  const s = (x >= 1 ? 1 : back * easeOut(x)) + extra;
+  $(id).setAttribute("opacity", clamp(x * 2.5).toFixed(3));
+  $(id).setAttribute("transform", `translate(${cx},${cy}) scale(${s.toFixed(4)}) translate(${-cx},${-cy})`);
+}
+function draw(id, t, start, dur = 0.6) {
+  const L = pathLen[id];
+  const k = easeInOut(prog(t, start, dur));
+  const el = $(id);
+  el.style.strokeDashoffset = (L * (1 - k)).toFixed(2);
+  el.setAttribute("opacity", k > 0 ? "1" : "0");
+}
+
+// ---------- render(t): every frame is a pure function of t ----------
+function render(t) {
+  // Intro
+  const introOut = easeInOut(prog(t, 2.0, 0.5));
+  $("intro").setAttribute("opacity", (1 - introOut).toFixed(3));
+  $("intro").setAttribute("transform", `translate(0,${(-40 * introOut).toFixed(2)})`);
+  const blink = bump(t, [1.25], 0.22);
+  $("eyes").setAttribute("transform", `translate(0,520) scale(1,${(1 - 0.92 * blink).toFixed(3)}) translate(0,-520)`);
+  const owlIn = easeOut(prog(t, 0.1, 0.6));
+  $("owl").setAttribute("opacity", owlIn.toFixed(3));
+
+  // Header + captions
+  setOpacity("header", easeOut(prog(t, 2.3, 0.5)));
+  const cap = CAPTIONS.find((c) => t >= c.s && t < c.e);
+  if (cap) {
+    const fin = easeOut(prog(t, cap.s, 0.4));
+    const fout = 1 - easeInOut(prog(t, cap.e - 0.3, 0.3));
+    const o = Math.min(fin, fout);
+    $("cap").textContent = cap.title; $("capsub").textContent = cap.sub;
+    for (const id of ["cap", "capsub"]) {
+      $(id).setAttribute("opacity", o.toFixed(3));
+      $(id).setAttribute("transform", `translate(0,${((1 - fin) * 18).toFixed(2)})`);
+    }
+  } else {
+    $("cap").setAttribute("opacity", "0"); $("capsub").setAttribute("opacity", "0");
+  }
+  const step = cap ? cap.step : 0;
+  dots.forEach((r, i) => {
+    const active = step === i + 1, done = step > i + 1 || step === 6;
+    const w = active ? 34 : 10;
+    // laid out left to right with the active pill wider
+    let x = 540 - (4 * 18 + 10 * 4 + 34) / 2;
+    for (let j = 0; j < i; j++) x += (step === j + 1 ? 34 : 10) + 18;
+    r.setAttribute("x", x.toFixed(1)); r.setAttribute("width", w);
+    r.setAttribute("fill", active || done ? GOLD : "#2A3655");
+  });
+
+  // Row 1
+  rise("nCheckout", t, 2.7);
+  const amount = 727.16 * easeOut(prog(t, 3.2, 1.4));
+  const items = Math.min(3, Math.floor(prog(t, 3.2, 1.2) * 3 + (t >= 3.2 ? 1 : 0)));
+  $("cartText").textContent = t < 3.2 ? "cart empty" : `${items} item${items === 1 ? "" : "s"} · $${amount.toFixed(2)}`;
+  rise("nModel", t, 5.6); rise("nResponse", t, 5.9);
+  draw("a1", t, 5.9); draw("a2", t, 6.1);
+
+  const pulseTimes = BUMP.model;
+  let pr = 0, po = 0;
+  for (const a of pulseTimes) {
+    const x = prog(t, a, 0.6);
+    if (t >= a && x < 1) { pr = 70 + 70 * easeOut(x); po = 0.7 * (1 - x); }
+  }
+  $("pulse").setAttribute("r", pr || 70); $("pulse").setAttribute("opacity", po.toFixed(3));
+  const mb = bump(t, BUMP.model);
+  $("nModel").setAttribute("transform", `translate(540,380) scale(${(1 + 0.05 * mb).toFixed(4)}) translate(-540,-380) translate(0,${((1 - easeOut(prog(t, 5.6, 0.55))) * 26).toFixed(2)})`);
+
+  // Response pill state
+  let state = null;
+  if (t >= 8.3 && t < 10.1) state = ["APPROVED · 87 ms", TEAL];
+  else if (t >= 10.1 && t < 23) state = ["DECLINED · 92 ms", CORAL];
+  else if (t >= 23) {
+    const cyc = [["APPROVED · 81 ms", TEAL], ["APPROVED · 74 ms", TEAL], ["DECLINED · 96 ms", CORAL]];
+    state = cyc[Math.floor((t - 23) / 1.6) % 3];
+  }
+  if (state) {
+    $("pillText").textContent = state[0];
+    $("pillText").setAttribute("fill", "#0A1020");
+    $("pill").setAttribute("fill", state[1]);
+  } else {
+    $("pillText").textContent = "waiting…";
+    $("pillText").setAttribute("fill", "#94A3B8");
+    $("pill").setAttribute("fill", "#1E293B");
+  }
+
+  // Row 2: Supabase
+  rise("bSupa", t, 10.6);
+  pop("c1", 190, 610, t, 10.9); pop("c2", 420, 610, t, 11.05); pop("c3", 650, 610, t, 11.2); pop("c4", 880, 610, t, 11.35);
+  draw("d1", t, 11.0); draw("d2", t, 11.1); draw("d3", t, 11.2);
+
+  // Row 3: Databricks
+  rise("bDbx", t, 14.6);
+  pop("mBronze", 250, 875, t, 14.9, 0.45, 0.12 * bump(t, BUMP.bronze));
+  pop("mSilver", 540, 875, t, 15.1, 0.45, 0.12 * bump(t, BUMP.silver));
+  pop("mGold", 830, 875, t, 15.3, 0.45, 0.12 * bump(t, BUMP.gold));
+  ["i1", "i2", "i3", "i4"].forEach((p, k) => draw(p, t, 15.0 + k * 0.08));
+  setOpacity("sBronze", easeOut(prog(t, 15.0, 0.4))); setOpacity("sSilver", easeOut(prog(t, 15.2, 0.4))); setOpacity("sGold", easeOut(prog(t, 15.4, 0.4)));
+  draw("m1", t, 15.3, 0.4); draw("m2", t, 15.5, 0.4);
+
+  // Row 4: models + loop
+  rise("k1", t, 19.1); rise("k2", t, 19.3);
+  draw("g1", t, 19.4, 0.7); draw("g2", t, 19.4, 0.5);
+  $("k1r").setAttribute("stroke-width", (2 + 3 * bump(t, BUMP.k1)).toFixed(2));
+  $("k2r").setAttribute("stroke-width", (2 + 3 * bump(t, BUMP.k2)).toFixed(2));
+  draw("loop", t, 20.9, 1.0);
+  setOpacity("loopLabel", easeOut(prog(t, 21.5, 0.5)));
+
+  // Footer
+  setOpacity("footer", easeOut(prog(t, 23.4, 0.6)));
+
+  // Particles
+  let n = 0;
+  for (const p of P) {
+    if (t < p.s || t > p.s + p.d || n >= pool.length) continue;
+    const el = $(p.path);
+    const pt = el.getPointAtLength(pathLen[p.path] * easeInOut((t - p.s) / p.d));
+    const { g, halo, core } = pool[n++];
+    g.setAttribute("transform", `translate(${pt.x.toFixed(1)},${pt.y.toFixed(1)})`);
+    g.setAttribute("opacity", "1");
+    halo.setAttribute("fill", p.color);
+    core.setAttribute("fill", p.color === GOLD ? "#FFF4D6" : "#FFE1E1");
+  }
+  for (; n < pool.length; n++) pool[n].g.setAttribute("opacity", "0");
+}
+
+window.render = render;
+window.DURATION = DURATION;
+
+
+// ---------- player controls ----------
+let now = 0, playing = false, last = null;
+const btn = $("ctlPlay"), scrub = $("ctlScrub"), clock = $("ctlClock");
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+function setT(v) {
+  now = clamp(v, 0, DURATION);
+  render(now);
+  scrub.value = now;
+  clock.textContent = `${fmt(now)} / ${fmt(DURATION)}`;
+}
+function tick(ts) {
+  if (!playing) return;
+  if (last !== null) now += (ts - last) / 1000;
+  last = ts;
+  if (now >= DURATION) { setT(DURATION); pause(); return; }
+  setT(now);
+  requestAnimationFrame(tick);
+}
+function play() { if (now >= DURATION - 0.05) now = 0; playing = true; last = null; btn.textContent = "Pause"; requestAnimationFrame(tick); }
+function pause() { playing = false; btn.textContent = "Play"; }
+btn.addEventListener("click", () => (playing ? pause() : play()));
+$("ctlReplay").addEventListener("click", () => { now = 0; play(); });
+scrub.addEventListener("input", () => { pause(); setT(Number(scrub.value)); });
+
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+document.fonts.ready.then(() => {
+  if (reduce) { setT(DURATION - 0.6); pause(); }
+  else { setT(0); play(); }
+});
+setT(DURATION - 0.6);  // complete diagram until fonts are ready
+</script>
