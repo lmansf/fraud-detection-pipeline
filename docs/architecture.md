@@ -20,8 +20,8 @@
 
 Two generators produce synthetic orders: one for legitimate traffic and one for fraudulent traffic. Both should write orders in the same schema so the outputs can be combined. See [data-generation.md](data-generation.md).
 
-- **Implemented in:** `Normal Order Generator.ipynb`, `Fraud Order Generator.ipynb`
-- **Output:** TODO (format and location)
+- **Implemented in:** `generator/order_generator.py` (normal and fraud orders in one run)
+- **Output:** the Supabase raw tables in `sql/001_raw_tables.sql`
 
 ### 2. Combine and label
 
@@ -43,6 +43,4 @@ Trains and evaluates a fraud classifier, then scores new orders.
 
 ## Open questions
 
-- Storage format between stages (CSV, Parquet, or a database)?
-- Should generation stay in notebooks, or move into importable Python modules?
 - What fraud-to-normal ratio should the combined dataset use?

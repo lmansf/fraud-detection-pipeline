@@ -1,31 +1,37 @@
-# Databricks notebook source
-# MAGIC %md
-# MAGIC # Owl Park order generator
-# MAGIC Scheduled job. Each run simulates a window of Owl Park purchases (normal guests plus fraud episodes),
-# MAGIC scores every order with the placeholder rules model, simulates the checkout response, and writes
-# MAGIC four raw tables to Supabase in one transaction:
-# MAGIC `raw_transactions`, `raw_fraud_decisions`, `raw_checkout_responses`, `raw_fraud_truth`.
-# MAGIC
-# MAGIC One-time setup (not part of the scheduled run): store the database password with
-# MAGIC `databricks secrets create-scope supabase` and `databricks secrets put-secret supabase db_password`,
-# MAGIC and add `psycopg2-binary` to the job's environment dependencies.
+"""Owl Park order generator.
 
-# COMMAND ----------
+Scheduled job. Each run simulates a window of Owl Park purchases (normal guests plus fraud episodes),
+scores every order with the placeholder rules model, simulates the checkout response, and writes
+four raw tables to Supabase in one transaction:
+`raw_transactions`, `raw_fraud_decisions`, `raw_checkout_responses`, `raw_fraud_truth`.
 
-# Job parameters. Defaults apply when run by hand; a scheduled job can override any of them.
-dbutils.widgets.text("window_minutes", "60", "Minutes of traffic to simulate")
-dbutils.widgets.text("orders_per_hour", "120", "Normal orders per hour")
-dbutils.widgets.text("fraud_share", "0.03", "Target share of orders that are fraud")
-dbutils.widgets.text("seed", "", "Random seed (blank = different every run)")
-dbutils.widgets.dropdown("dry_run", "false", ["false", "true"], "Generate without writing")
+Setup: `pip install psycopg2-binary`, then set SUPABASE_DB_PASSWORD to the database password
+(not needed for --dry-run).
 
-WINDOW_MINUTES = int(dbutils.widgets.get("window_minutes"))
-ORDERS_PER_HOUR = float(dbutils.widgets.get("orders_per_hour"))
-FRAUD_SHARE = float(dbutils.widgets.get("fraud_share"))
-SEED = dbutils.widgets.get("seed").strip()
-DRY_RUN = dbutils.widgets.get("dry_run") == "true"
+Run: python generator/order_generator.py [--window-minutes 60] [--orders-per-hour 120]
+                                         [--fraud-share 0.03] [--seed N] [--dry-run]
+"""
+import argparse
+import csv
+import os
+from pathlib import Path
 
-SEEDS_SCHEMA = "`fraud-detection-pipeline`.seeds"
+# Job parameters. Defaults apply when run by hand; a scheduler can override any of them.
+parser = argparse.ArgumentParser(description="Simulate Owl Park orders and write them to Supabase.")
+parser.add_argument("--window-minutes", type=int, default=60, help="Minutes of traffic to simulate")
+parser.add_argument("--orders-per-hour", type=float, default=120, help="Normal orders per hour")
+parser.add_argument("--fraud-share", type=float, default=0.03, help="Target share of orders that are fraud")
+parser.add_argument("--seed", default="", help="Random seed (blank = different every run)")
+parser.add_argument("--dry-run", action="store_true", help="Generate without writing")
+args = parser.parse_args()
+
+WINDOW_MINUTES = args.window_minutes
+ORDERS_PER_HOUR = args.orders_per_hour
+FRAUD_SHARE = args.fraud_share
+SEED = str(args.seed).strip()
+DRY_RUN = args.dry_run
+
+SEED_DIR = Path(__file__).resolve().parent.parent / "data" / "seed"
 SUPABASE = {
     "host": "aws-0-us-east-2.pooler.supabase.com",
     "port": 5432,
@@ -34,7 +40,6 @@ SUPABASE = {
 }
 MODEL_VERSION = "rules-v0"
 
-# COMMAND ----------
 
 import json
 import math
@@ -53,12 +58,16 @@ RUN_END = datetime.now(timezone.utc)
 RUN_START = RUN_END - timedelta(minutes=WINDOW_MINUTES)
 BATCH_ID = str(uuid.UUID(int=rng.getrandbits(128)))
 
-# COMMAND ----------
 
 # Seed tables are small, so pull them into Python once.
-products = {r["sku"]: r.asDict() for r in spark.table(f"{SEEDS_SCHEMA}.products").collect()}
-real_customers = [r.asDict() for r in spark.table(f"{SEEDS_SCHEMA}.real_customers").collect()]
-false_customers = [r.asDict() for r in spark.table(f"{SEEDS_SCHEMA}.false_customers").collect()]
+def read_seed(name):
+    with open(SEED_DIR / f"{name}.csv", newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+products = {r["sku"]: r for r in read_seed("products")}
+real_customers = read_seed("real_customers")
+false_customers = read_seed("false_customers")
 
 FIRST_NAMES = sorted({c["first_name"] for c in real_customers})
 LAST_NAMES = sorted({c["last_name"] for c in real_customers})
@@ -74,7 +83,6 @@ for c in fraud_by_pattern["fraud_ring"]:
 
 print(f"{len(products)} products, {len(real_customers)} real customers, {len(false_customers)} fraudster identities")
 
-# COMMAND ----------
 
 # ---------- order building blocks ----------
 TAX_RATE = Decimal("0.06")
@@ -162,7 +170,6 @@ def make_order(c, cart, ts, guest=None, channel=None):
         "status": "pending",        # set after scoring and payment authorization
     }
 
-# COMMAND ----------
 
 # ---------- normal guests ----------
 def normal_cart(c, ts):
@@ -215,7 +222,6 @@ def normal_order(ts):
     c = rng.choice(real_customers)
     return make_order(c, normal_cart(c, ts), ts)
 
-# COMMAND ----------
 
 # ---------- fraud episodes ----------
 # Each episode returns a list of (order, fraud_ring_id) spread over a few minutes, like a real attack.
@@ -311,7 +317,6 @@ EPISODES = {
     "fraud_ring": (ep_fraud_ring, 0.15),
 }
 
-# COMMAND ----------
 
 # ---------- placeholder real-time model (rules-v0) ----------
 # Features use only what is known at the moment of the order. Velocity is tracked within this run;
@@ -329,7 +334,7 @@ def features(o):
     created = o["account_created_at"]
     if isinstance(created, str):
         created = datetime.fromisoformat(created.replace("Z", "+00:00"))
-    if created is not None and created.tzinfo is None:          # Spark returns naive UTC timestamps
+    if created is not None and created.tzinfo is None:          # treat naive timestamps as UTC
         created = created.replace(tzinfo=timezone.utc)
     return {
         "order_total": round(total, 2),
@@ -368,7 +373,6 @@ def score(f):
 def decide(s):
     return "decline" if s >= 0.85 else "review" if s >= 0.6 else "approve"
 
-# COMMAND ----------
 
 # ---------- simulate checkout: score, authorize, respond ----------
 ISSUER_DECLINE = {None: 0.02, "card_testing": 0.55, "stolen_card_resale": 0.10, "gift_card_cashout": 0.08,
@@ -423,7 +427,6 @@ def process(o, pattern):
     }
     return decision_row, response_row
 
-# COMMAND ----------
 
 # ---------- generate this run's traffic ----------
 window_s = WINDOW_MINUTES * 60
@@ -463,7 +466,6 @@ print(f"{len(transactions)} orders: {n_normal} normal, {fraud_orders} fraud")
 print("fraud by pattern:", dict(Counter(p for _, p, _ in events if p)))
 print("status:", dict(Counter(t["status"] for t in transactions)))
 
-# COMMAND ----------
 
 # ---------- write to Supabase ----------
 JSON_COLS = {"raw_payload", "cart", "reason_codes", "features_json"}
@@ -481,7 +483,9 @@ def insert_rows(cur, table, rows):
 
 
 def connect_supabase(retries=3):
-    password = dbutils.secrets.get(scope="supabase", key="db_password")
+    password = os.environ.get("SUPABASE_DB_PASSWORD")
+    if not password:
+        raise SystemExit("Set SUPABASE_DB_PASSWORD to the Supabase database password (or use --dry-run).")
     for attempt in range(1, retries + 1):
         try:
             return psycopg2.connect(**SUPABASE, password=password, sslmode="require",
@@ -506,10 +510,9 @@ else:
     finally:
         conn.close()
 
-# COMMAND ----------
 
-# Return a short summary to the job run page.
-dbutils.notebook.exit(json.dumps({
+# Print a short summary for the scheduler's log.
+print(json.dumps({
     "batch_id": BATCH_ID, "orders": len(transactions), "fraud_orders": fraud_orders,
     "declined": sum(t["status"] == "declined" for t in transactions), "dry_run": DRY_RUN,
 }))

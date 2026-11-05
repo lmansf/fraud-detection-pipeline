@@ -1,10 +1,10 @@
 # Data Generation
 
-> Draft. Both generator notebooks are currently empty. Fill in each section as the generators are written.
+> Draft. Both order types come from `generator/order_generator.py`. Fill in each section as the generator grows.
 
 ## Normal Order Generator
 
-**Notebook:** `Normal Order Generator.ipynb`
+**Code:** `generator/order_generator.py`
 
 Generates synthetic legitimate orders.
 
@@ -14,7 +14,7 @@ Generates synthetic legitimate orders.
 
 ## Fraud Order Generator
 
-**Notebook:** `Fraud Order Generator.ipynb`
+**Code:** `generator/order_generator.py`
 
 Generates synthetic fraudulent orders.
 
