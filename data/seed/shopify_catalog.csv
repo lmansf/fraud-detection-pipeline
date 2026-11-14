@@ -1,0 +1,4 @@
+shopify_product_id,shopify_variant_id,product_handle,product_title,variant_title,sku,shopify_product_type,product_type,tags,status,price,compare_at_price,is_gift_card,requires_shipping,synced_at
+gid://shopify/Product/15436801474665,gid://shopify/ProductVariant/67919623651433,annual-pass,Annual Pass,Default Title,OP-PASS-ANNUAL,Ticket,annual_pass,annual|pass|ticket,ACTIVE,14.99,,false,false,2026-11-14T10:53:18+00:00
+gid://shopify/Product/15436801441897,gid://shopify/ProductVariant/67919623618665,day-ticket,Day Ticket,Default Title,OP-TICKET-DAY,Ticket,day_ticket,day|ticket,ACTIVE,3.99,,false,false,2026-11-14T10:53:18+00:00
+gid://shopify/Product/15436801507433,gid://shopify/ProductVariant/67919623684201,opening-night-ticket,Opening Night Ticket,Default Title,OP-TICKET-OPENING,Ticket,event_ticket,opening-night|ticket,DRAFT,3.99,,false,false,2026-11-14T10:53:18+00:00
