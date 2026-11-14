@@ -9,8 +9,9 @@ A pipeline for generating synthetic e-commerce order data, both legitimate and f
 | Path | Description |
 | --- | --- |
 | `generator/order_generator.py` | Scheduled job: simulates a window of orders (normal guests plus fraud episodes), scores them, and writes them to Supabase. |
+| `generator/sync_shopify_catalog.py` | Refreshes `data/seed/shopify_catalog.csv` from the Owl Park Shopify store. The generator only sells what is in that file. |
 | `sql/001_raw_tables.sql` | DDL for the Supabase raw tables: `raw_transactions`, `raw_fraud_decisions`, `raw_checkout_responses`, `raw_fraud_truth`. |
-| `data/seed/` | Synthetic seed data (products, legitimate guests, fraudster identities) and `make_customers.py`, which regenerates the customer pools. Everything in it is fake. |
+| `data/seed/` | The Shopify product catalog snapshot (`shopify_catalog.csv`, real products and prices), synthetic guests and fraudster identities, and `make_customers.py`, which regenerates the customer pools. Everything except the catalog is fake. |
 | `docs/` | Project documentation (see below). |
 
 ## Documentation
@@ -39,8 +40,21 @@ python generator/order_generator.py --window-minutes 60    # simulate an hour an
 | Environment variable | Purpose |
 | --- | --- |
 | `SUPABASE_DB_PASSWORD` | Password for the Supabase Postgres user the generator connects as. Required unless `--dry-run`. |
+| `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_ADMIN_TOKEN` | Only for `sync_shopify_catalog.py`. |
 
 Other options: `--orders-per-hour` (default 120), `--fraud-share` (default 0.03) and `--seed` (blank gives a different run each time).
+
+### Refreshing the product catalog
+
+Generated orders use the real Owl Park Shopify products, with their Shopify product and variant ids on every cart line, so simulated and real orders share one product key. When products or prices change in Shopify, refresh the snapshot and commit it:
+
+```bash
+export SHOPIFY_STORE_DOMAIN=<store>.myshopify.com
+export SHOPIFY_ADMIN_TOKEN=...   # Admin API token with read_products; never commit it
+python generator/sync_shopify_catalog.py
+```
+
+`--from-json products.json` builds the file from a saved Admin GraphQL `products` response instead. Only `ACTIVE` products are sold by the generator.
 
 ## Roadmap
 

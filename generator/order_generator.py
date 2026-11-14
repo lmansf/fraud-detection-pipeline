@@ -5,6 +5,10 @@ scores every order with the placeholder rules model, simulates the checkout resp
 four raw tables to Supabase in one transaction:
 `raw_transactions`, `raw_fraud_decisions`, `raw_checkout_responses`, `raw_fraud_truth`.
 
+Products and prices come from the real Owl Park Shopify catalog in data/seed/shopify_catalog.csv
+(refresh with generator/sync_shopify_catalog.py), and each cart line keeps its Shopify product and
+variant ids.
+
 Setup: `pip install psycopg2-binary`, then set SUPABASE_DB_PASSWORD to the database password
 (not needed for --dry-run).
 
@@ -65,7 +69,17 @@ def read_seed(name):
         return list(csv.DictReader(f))
 
 
-products = {r["sku"]: r for r in read_seed("products")}
+# Products come from the real Shopify catalog (refresh with generator/sync_shopify_catalog.py).
+# Only ACTIVE variants can be bought, as in the real store.
+catalog = [r for r in read_seed("shopify_catalog") if r["status"] == "ACTIVE"]
+catalog_by_type = defaultdict(list)
+for v in catalog:
+    catalog_by_type[v["product_type"]].append(v)
+if not catalog_by_type["day_ticket"]:
+    raise SystemExit("shopify_catalog.csv has no active day_ticket variant; run generator/sync_shopify_catalog.py")
+CORE_TYPES = {"day_ticket", "event_ticket", "annual_pass", "gift_card"}
+ADDON_TYPES = sorted(t for t in catalog_by_type if t not in CORE_TYPES)   # anything new in Shopify (merch etc.)
+CATALOG_SYNCED_AT = max(v["synced_at"] for v in catalog)
 real_customers = read_seed("real_customers")
 false_customers = read_seed("false_customers")
 
@@ -81,7 +95,8 @@ fraud_rings = defaultdict(list)                # identities sharing devices and 
 for c in fraud_by_pattern["fraud_ring"]:
     fraud_rings[c["fraud_ring_id"]].append(c)
 
-print(f"{len(products)} products, {len(real_customers)} real customers, {len(false_customers)} fraudster identities")
+print(f"{len(catalog)} active Shopify variants ({', '.join(sorted(catalog_by_type))}; synced {CATALOG_SYNCED_AT}), "
+      f"{len(real_customers)} real customers, {len(false_customers)} fraudster identities")
 
 
 # ---------- order building blocks ----------
@@ -103,7 +118,7 @@ def new_id():
 
 
 def price_tier(d):
-    """Ticket price tier for a visit date: weekends, the winter holidays and July are peak."""
+    """Demand tier for a visit date: weekends, the winter holidays and July are peak (resellers target these)."""
     if d.weekday() >= 5 or (d.month == 12 and d.day >= 20) or (d.month == 1 and d.day <= 3) or d.month == 7:
         return "PEAK"
     return "REG" if d.weekday() == 4 else "VALUE"
@@ -116,12 +131,33 @@ def next_peak_date(ts, min_days=3, max_days=30):
     return d
 
 
-def line(sku, qty, **attributes):
-    p = products[sku]
-    unit = money(p["unit_price"])
-    return {"sku": sku, "product_name": p["product_name"], "product_type": p["product_type"],
-            "qty": qty, "unit_price": float(unit), "line_discount": 0.0,
+def pick(product_type):
+    """A random active Shopify variant of this product_type, or None if the store has none."""
+    options = catalog_by_type.get(product_type)
+    return rng.choice(options) if options else None
+
+
+def by_price(product_type):
+    return sorted(catalog_by_type.get(product_type, []), key=lambda v: money(v["price"]))
+
+
+def line(v, qty, **attributes):
+    """One cart line for Shopify variant row v. Keeps the real Shopify ids so it joins to real orders."""
+    unit = money(v["price"])
+    list_price = money(v["compare_at_price"]) if v["compare_at_price"] else unit
+    name = v["product_title"] if v["variant_title"] in ("", "Default Title") else f'{v["product_title"]} – {v["variant_title"]}'
+    return {"sku": v["sku"], "product_name": name, "product_type": v["product_type"],
+            "shopify_product_id": v["shopify_product_id"], "shopify_variant_id": v["shopify_variant_id"],
+            "product_handle": v["product_handle"], "catalog_synced_at": v["synced_at"],
+            "qty": qty, "list_price": float(list_price), "unit_price": float(unit), "line_discount": 0.0,
             "line_total": float(unit * qty), "attributes": attributes}
+
+
+def addon_line(v, ts):
+    """A line for a product type the generator has no special rules for (merch and anything new)."""
+    if as_bool(v["requires_shipping"]):
+        return line(v, 1, ship_or_pickup=rng.choice(["ship", "pickup"]))
+    return line(v, 1, visit_date=ts.date().isoformat())
 
 
 def random_names(n, surname=None):
@@ -172,49 +208,32 @@ def make_order(c, cart, ts, guest=None, channel=None):
 
 
 # ---------- normal guests ----------
+def gift_line(v, ts, recipients):
+    return line(v, len(recipients), delivery="email", recipients=recipients, delivery_date=ts.date().isoformat())
+
+
 def normal_cart(c, ts):
     party = rng.choices([1, 2, 3, 4, 5, 6], weights=[10, 30, 20, 25, 10, 5])[0]
-    adults = max(1, round(party * rng.uniform(0.4, 1.0)))
-    kids = party - adults
     names = [f'{c["first_name"]} {c["last_name"]}'] + random_names(party - 1, c["last_name"])
     visit = (ts + timedelta(days=int(rng.expovariate(1 / 21)) + 1)).date()   # most visits within ~3 weeks
     cart = []
-    if rng.random() < 0.05:                                                    # annual pass purchase
-        sku = rng.choice(["PASS-FLEDGLING", "PASS-NIGHTOWL", "PASS-SNOWY", "PASS-GREATHORN"])
+    if catalog_by_type["annual_pass"] and rng.random() < 0.06:               # annual pass purchase
+        v = pick("annual_pass")
         for name in names[:rng.randint(1, 2)]:
-            cart.append(line(sku, 1, holder_name=name))
+            cart.append(line(v, 1, holder_name=name))
     else:
-        days = rng.choices([1, 2, 3, 5], weights=[75, 12, 9, 4])[0]
-        if days == 1:
-            tier = price_tier(visit)
-            cart.append(line(f"DAY-1-{tier}-ADULT", adults, visit_date=visit.isoformat(), guest_names=names[:adults]))
-            if kids:
-                cart.append(line(f"DAY-1-{tier}-CHILD", kids, visit_date=visit.isoformat(), guest_names=names[adults:]))
-        else:
-            cart.append(line(f"DAY-{days}-ADULT", adults, first_visit_date=visit.isoformat(), days=days, guest_names=names[:adults]))
-            if kids:
-                cart.append(line(f"DAY-{days}-CHILD", kids, first_visit_date=visit.isoformat(), days=days, guest_names=names[adults:]))
-        if rng.random() < 0.30:
-            cart.append(line("HOOT-PASS", party, visit_date=visit.isoformat()))
-        if rng.random() < 0.50:
-            cart.append(line("PARKING-DAY", days, visit_date=visit.isoformat()))
-        if days > 1 and rng.random() < 0.6:
-            hotel = rng.choice(["HOTEL-ROOST-STD", "HOTEL-ROOST-FAM", "HOTEL-CANOPY-STD", "HOTEL-CANOPY-STE"])
-            cart.append(line(hotel, days, check_in=visit.isoformat(),
-                             check_out=(visit + timedelta(days=days)).isoformat(), guest_count=party))
-        if rng.random() < 0.15:
-            dining = rng.choice(["DINE-HOOTENANNY", "DINE-MOONLIGHT", "DINE-PERCH"])
-            cart.append(line(dining, party, reservation_ts=f"{visit.isoformat()}T{rng.choice(['08:30', '12:00', '18:30'])}:00",
-                             party_size=party))
-    if rng.random() < 0.25:
-        for sku in rng.sample(["MERCH-PLUSH-HOOTIE", "MERCH-EARS-FEATHER", "MERCH-TEE-ADULT",
-                               "MERCH-TEE-YOUTH", "MERCH-HOODIE", "MERCH-MUG"], rng.randint(1, 2)):
-            cart.append(line(sku, 1, ship_or_pickup="pickup"))
-    if rng.random() < 0.05:                                                    # an occasional gift for family
+        cart.append(line(pick("day_ticket"), party, visit_date=visit.isoformat(), guest_names=names))
+        if catalog_by_type["event_ticket"] and rng.random() < 0.10:         # a special-event night with the party
+            cart.append(line(pick("event_ticket"), party, visit_date=visit.isoformat(), guest_names=names))
+    if ADDON_TYPES and rng.random() < 0.25:                                  # merch or anything else the store sells
+        pool = [v for t in ADDON_TYPES for v in catalog_by_type[t]]
+        for v in rng.sample(pool, min(len(pool), rng.randint(1, 2))):
+            cart.append(addon_line(v, ts))
+    gifts = by_price("gift_card")
+    if gifts and rng.random() < 0.05:                                        # an occasional gift for family
         name = random_names(1, c["last_name"])[0]
-        cart.append(line(rng.choice(["GIFT-25", "GIFT-50", "GIFT-100"]), 1, delivery="email",
-                         recipients=[{"name": name, "email": name.lower().replace(" ", ".") + "@example.com"}],
-                         delivery_date=(ts + timedelta(days=rng.randint(0, 14))).date().isoformat()))
+        cart.append(gift_line(rng.choice(gifts[:max(1, len(gifts) // 2)]), ts,
+                              [{"name": name, "email": name.lower().replace(" ", ".") + "@example.com"}]))
     return cart
 
 
@@ -225,21 +244,32 @@ def normal_order(ts):
 
 # ---------- fraud episodes ----------
 # Each episode returns a list of (order, fraud_ring_id) spread over a few minutes, like a real attack.
+# Episodes only use products the Shopify store actually sells; an episode whose required product type
+# isn't in the catalog is switched off for the run (see EPISODES below).
 
 def throwaway_email():
     return f"{uuid.UUID(int=rng.getrandbits(128)).hex[:10]}@{rng.choice(['mailbox.example', 'inbox.example', 'tempmail.example'])}"
 
 
+def bulk_tickets(n, visit):
+    return line(pick("day_ticket"), n, visit_date=visit.isoformat(), guest_names=random_names(n))
+
+
 def ep_card_testing(start):
     rig = rng.choice(list(card_testing_rigs.values()))
+    cheapest = sorted(catalog, key=lambda v: money(v["price"]))[:3]   # testers buy the cheapest thing in the store
     ts, out = start, []
     for _ in range(rng.randint(5, 12)):
         c = rng.choice(rig)                      # a different stolen card most attempts
-        sku = rng.choice(["HOOT-PASS-SINGLE", "GIFT-25", "MERCH-MUG", "MERCH-EARS-FEATHER"])
-        cart = [line(sku, 1, ship_or_pickup="pickup") if sku.startswith("MERCH")
-                else line(sku, 1, visit_date=ts.date().isoformat()) if sku.startswith("HOOT")
-                else line(sku, 1, delivery="email", recipients=[{"name": "", "email": throwaway_email()}],
-                          delivery_date=ts.date().isoformat())]
+        v = rng.choice(cheapest)
+        if v["product_type"] == "gift_card":
+            cart = [gift_line(v, ts, [{"name": "", "email": throwaway_email()}])]
+        elif v["product_type"] == "annual_pass":
+            cart = [line(v, 1, holder_name=random_names(1)[0])]
+        elif v["product_type"] in ("day_ticket", "event_ticket"):
+            cart = [line(v, 1, visit_date=ts.date().isoformat(), guest_names=random_names(1))]
+        else:
+            cart = [addon_line(v, ts)]
         out.append((make_order(c, cart, ts, guest=True, channel="web"), None))
         ts += timedelta(seconds=rng.randint(15, 90))
     return out
@@ -251,9 +281,9 @@ def ep_stolen_card_resale(start):
     for _ in range(rng.choice([1, 1, 2])):
         n = rng.randint(6, 16)
         visit = next_peak_date(ts)
-        cart = [line("DAY-1-PEAK-ADULT", n, visit_date=visit.isoformat(), guest_names=random_names(n))]
-        if rng.random() < 0.4:
-            cart.append(line("HOOT-PASS", n, visit_date=visit.isoformat()))
+        cart = [bulk_tickets(n, visit)]
+        if catalog_by_type["event_ticket"] and rng.random() < 0.4:           # resell the special-event night too
+            cart.append(line(pick("event_ticket"), n, visit_date=visit.isoformat(), guest_names=random_names(n)))
         out.append((make_order(c, cart, ts), None))
         ts += timedelta(minutes=rng.randint(3, 25))
     return out
@@ -261,12 +291,11 @@ def ep_stolen_card_resale(start):
 
 def ep_gift_card_cashout(start):
     c = rng.choice(fraud_by_pattern["gift_card_cashout"])
+    gifts = by_price("gift_card")
     ts, out = start, []
     for _ in range(rng.randint(1, 3)):
-        qty = rng.randint(2, 4)
-        cart = [line(rng.choice(["GIFT-250", "GIFT-500"]), qty, delivery="email",
-                     recipients=[{"name": n, "email": throwaway_email()} for n in random_names(qty)],
-                     delivery_date=ts.date().isoformat())]
+        recipients = [{"name": n, "email": throwaway_email()} for n in random_names(rng.randint(2, 4))]
+        cart = [gift_line(rng.choice(gifts[len(gifts) // 2:]), ts, recipients)]   # the biggest denominations
         out.append((make_order(c, cart, ts), None))
         ts += timedelta(minutes=rng.randint(2, 20))
     return out
@@ -274,20 +303,18 @@ def ep_gift_card_cashout(start):
 
 def ep_account_takeover(start):
     c = rng.choice(fraud_by_pattern["account_takeover"])     # a real guest's account, new device and location
+    gifts, passes = by_price("gift_card"), by_price("annual_pass")
     ts, out = start, []
     for _ in range(rng.choice([1, 2])):
         roll = rng.random()
-        if roll < 0.4:
-            qty = rng.randint(2, 3)
-            cart = [line("GIFT-500", qty, delivery="email",
-                         recipients=[{"name": n, "email": throwaway_email()} for n in random_names(qty)],
-                         delivery_date=ts.date().isoformat())]
-        elif roll < 0.7:
-            cart = [line("PASS-GREATHORN", 1, holder_name=n) for n in random_names(rng.randint(2, 3))]
+        if gifts and roll < 0.4:
+            recipients = [{"name": n, "email": throwaway_email()} for n in random_names(rng.randint(2, 3))]
+            cart = [gift_line(gifts[-1], ts, recipients)]
+        elif passes and roll < 0.7:
+            cart = [line(passes[-1], 1, holder_name=n) for n in random_names(rng.randint(2, 3))]
         else:
             n = rng.randint(5, 10)
-            visit = next_peak_date(ts)
-            cart = [line("DAY-1-PEAK-ADULT", n, visit_date=visit.isoformat(), guest_names=random_names(n))]
+            cart = [bulk_tickets(n, next_peak_date(ts))]
         out.append((make_order(c, cart, ts, guest=False), None))
         ts += timedelta(minutes=rng.randint(5, 30))
     return out
@@ -300,22 +327,26 @@ def ep_fraud_ring(start):
         c = rng.choice(members)
         n = rng.randint(4, 8)
         visit = next_peak_date(ts)
-        cart = [line("DAY-1-PEAK-ADULT", n, visit_date=visit.isoformat(), guest_names=random_names(n))]
-        if rng.random() < 0.3:
-            cart.append(line(rng.choice(["HOTEL-ROOST-STD", "HOTEL-CANOPY-STD"]), 1, check_in=visit.isoformat(),
-                             check_out=(visit + timedelta(days=1)).isoformat(), guest_count=n))
+        cart = [bulk_tickets(n, visit)]
+        if catalog_by_type["event_ticket"] and rng.random() < 0.3:
+            cart.append(line(pick("event_ticket"), n, visit_date=visit.isoformat(), guest_names=random_names(n)))
         out.append((make_order(c, cart, ts), ring_id))
         ts += timedelta(minutes=rng.randint(2, 20))
     return out
 
 
-EPISODES = {
-    "card_testing": (ep_card_testing, 0.25),
-    "stolen_card_resale": (ep_stolen_card_resale, 0.25),
-    "gift_card_cashout": (ep_gift_card_cashout, 0.20),
-    "account_takeover": (ep_account_takeover, 0.15),
-    "fraud_ring": (ep_fraud_ring, 0.15),
+# pattern: (episode, weight, product types the store must sell for the pattern to run)
+ALL_EPISODES = {
+    "card_testing": (ep_card_testing, 0.25, set()),
+    "stolen_card_resale": (ep_stolen_card_resale, 0.25, {"day_ticket"}),
+    "gift_card_cashout": (ep_gift_card_cashout, 0.20, {"gift_card"}),
+    "account_takeover": (ep_account_takeover, 0.15, {"day_ticket"}),
+    "fraud_ring": (ep_fraud_ring, 0.15, {"day_ticket"}),
 }
+EPISODES = {k: (fn, w) for k, (fn, w, needs) in ALL_EPISODES.items() if all(catalog_by_type[t] for t in needs)}
+SKIPPED_PATTERNS = sorted(set(ALL_EPISODES) - set(EPISODES))
+if SKIPPED_PATTERNS:
+    print(f"fraud patterns off (store doesn't sell what they need): {', '.join(SKIPPED_PATTERNS)}")
 
 
 # ---------- placeholder real-time model (rules-v0) ----------
@@ -350,6 +381,13 @@ def features(o):
     }
 
 
+# Dollar thresholds are counted in day tickets so they follow Shopify prices. Under the old made-up
+# catalog (resellers bought $129 peak tickets) they were $400 and $1,500, about 3 and 11 tickets.
+TICKET_PRICE = sorted(money(v["price"]) for v in catalog_by_type["day_ticket"])[len(catalog_by_type["day_ticket"]) // 2]
+HIGH_VALUE_GIFT_TOTAL = float(TICKET_PRICE * 3)
+HIGH_ORDER_TOTAL = float(TICKET_PRICE * 11)
+
+
 def score(f):
     """Hand-tuned rules standing in for Model 1. Returns (score 0-1, reason codes)."""
     points, reasons = 0.0, []
@@ -357,11 +395,11 @@ def score(f):
         (f["device_distinct_cards_1h"] >= 3, 2.5, "MANY_CARDS_ON_DEVICE"),
         (f["device_txn_1h"] >= 4, 1.5, "HIGH_DEVICE_VELOCITY"),
         (f["headless_browser"], 1.5, "HEADLESS_BROWSER"),
-        (f["gift_card_share"] >= 0.8 and f["order_total"] >= 400, 2.0, "HIGH_VALUE_GIFT_CARDS"),
+        (f["gift_card_share"] >= 0.8 and f["order_total"] >= HIGH_VALUE_GIFT_TOTAL, 2.0, "HIGH_VALUE_GIFT_CARDS"),
         (f["ip_billing_mismatch"], 1.0, "IP_BILLING_MISMATCH"),
         (f["account_age_days"] is not None and f["account_age_days"] < 7, 1.0, "NEW_ACCOUNT"),
         (f["n_distinct_guest_names"] >= 8, 1.5, "MANY_GUEST_NAMES"),
-        (f["order_total"] >= 1500, 0.8, "HIGH_ORDER_VALUE"),
+        (f["order_total"] >= HIGH_ORDER_TOTAL, 0.8, "HIGH_ORDER_VALUE"),
     ]
     for hit, weight, code in rules:
         if hit:
@@ -465,6 +503,10 @@ print(f"window {RUN_START:%Y-%m-%d %H:%M} to {RUN_END:%H:%M} UTC, batch {BATCH_I
 print(f"{len(transactions)} orders: {n_normal} normal, {fraud_orders} fraud")
 print("fraud by pattern:", dict(Counter(p for _, p, _ in events if p)))
 print("status:", dict(Counter(t["status"] for t in transactions)))
+decisions_by_pattern = defaultdict(Counter)
+for (_, pattern, _), d in zip(events, decisions):
+    decisions_by_pattern[pattern or "normal"][d["decision"]] += 1
+print("decisions by pattern:", {p: dict(c) for p, c in sorted(decisions_by_pattern.items())})
 
 
 # ---------- write to Supabase ----------
@@ -515,4 +557,5 @@ else:
 print(json.dumps({
     "batch_id": BATCH_ID, "orders": len(transactions), "fraud_orders": fraud_orders,
     "declined": sum(t["status"] == "declined" for t in transactions), "dry_run": DRY_RUN,
+    "catalog_synced_at": CATALOG_SYNCED_AT, "patterns_off": SKIPPED_PATTERNS,
 }))
